@@ -1,5 +1,7 @@
 # Rentry Builder
 
+**Live app: https://syrnikov.github.io/rentry-builder/**
+
 A visual, drag-and-drop builder for [rentry.co](https://rentry.co) profile pages. Arrange blocks (profile card, interests, links, socials, columns, …) on a Figma-style canvas, style the page with every rentry metadata option, and copy out the **METADATA** and **markdown** ready to paste into rentry.
 
 - Visual rich-text editing (bold, colors, underline styles, spoilers, links, inline emoji/flag images) that compiles to rentry markdown
