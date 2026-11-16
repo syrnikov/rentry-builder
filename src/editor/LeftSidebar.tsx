@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { kbd } from '../app/platform';
 import clsx from 'clsx';
 import { ChevronDown, Eye, EyeOff, FilePlus2, FolderOpen, Lock, Plus, Save, Search, Unlock } from 'lucide-react';
 import { useEditor } from '../store/editorStore';
@@ -216,7 +217,7 @@ function Templates() {
       </div>
       <div className="lib-cat" style={{ padding: '10px 6px 6px' }}>Templates</div>
       {TEMPLATES.map((t) => (
-        <button key={t.id} className="tpl-card" onClick={() => { loadProject(t.make()); toast(`Loaded “${t.name}” · Ctrl+Z to undo`); }}>
+        <button key={t.id} className="tpl-card" onClick={() => { loadProject(t.make()); toast(`Loaded “${t.name}” · ${kbd("mod", "Z")} to undo`); }}>
           <span className="tpl-thumb" style={{ background: t.swatch[0] }}>
             <i style={{ background: t.swatch[1] }} />
             <b style={{ background: t.swatch[2] }} />
@@ -225,7 +226,7 @@ function Templates() {
           <span><strong>{t.name}</strong><small>{t.description}</small></span>
         </button>
       ))}
-      <button className="tpl-card" onClick={() => { loadProject(blankProject()); toast('Blank page · Ctrl+Z to undo'); }}>
+      <button className="tpl-card" onClick={() => { loadProject(blankProject()); toast(`Blank page · ${kbd("mod", "Z")} to undo`); }}>
         <span className="tpl-thumb" style={{ background: 'var(--track)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-3)' }}><FilePlus2 size={18} /></span>
         <span><strong>Blank page</strong><small>Start from scratch with rentry defaults</small></span>
       </button>

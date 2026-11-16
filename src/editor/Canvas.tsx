@@ -1,4 +1,5 @@
 import { createContext, CSSProperties, memo, ReactNode, useContext, useEffect, useMemo, useRef } from 'react';
+import { kbd } from '../app/platform';
 import clsx from 'clsx';
 import { ArrowDown, ArrowUp, Copy, GripVertical, Lock, Maximize, Minus, Plus, Trash2 } from 'lucide-react';
 import { getDef } from '../blocks/registry';
@@ -73,8 +74,18 @@ export function Canvas() {
       const z = useEditor.getState().ui.zoom;
       setUI({ zoom: clampZoom(z * (e.deltaY < 0 ? 1.08 : 1 / 1.08)) });
     };
+    // Safari reports trackpad pinches as gesture events (not ctrl+wheel); without this a pinch zooms the whole app.
+    let start = 1;
+    const gStart = (e: Event) => { e.preventDefault(); start = useEditor.getState().ui.zoom; };
+    const gChange = (e: Event) => { e.preventDefault(); setUI({ zoom: clampZoom(start * (e as Event & { scale: number }).scale) }); };
     el.addEventListener('wheel', wheel, { passive: false });
-    return () => el.removeEventListener('wheel', wheel);
+    el.addEventListener('gesturestart', gStart);
+    el.addEventListener('gesturechange', gChange);
+    return () => {
+      el.removeEventListener('wheel', wheel);
+      el.removeEventListener('gesturestart', gStart);
+      el.removeEventListener('gesturechange', gChange);
+    };
   }, [setUI]);
 
   return (
@@ -127,9 +138,9 @@ function CanvasHud({ scroller, artW }: { scroller: React.RefObject<HTMLDivElemen
   const count = useEditor((s) => s.project.blocks.length);
   return (
     <div className="canvas-hud" onClick={(e) => e.stopPropagation()}>
-      <button className="tb-btn" title="Zoom out (Ctrl -)" onClick={() => setUI({ zoom: clampZoom(zoom / 1.2) })}><Minus size={14} /></button>
-      <span className="zoom-label" title="Reset to 100% (Ctrl 0)" onClick={() => setUI({ zoom: 1 })}>{Math.round(zoom * 100)}%</span>
-      <button className="tb-btn" title="Zoom in (Ctrl +)" onClick={() => setUI({ zoom: clampZoom(zoom * 1.2) })}><Plus size={14} /></button>
+      <button className="tb-btn" title={`Zoom out (${kbd("mod", "-")})`} onClick={() => setUI({ zoom: clampZoom(zoom / 1.2) })}><Minus size={14} /></button>
+      <span className="zoom-label" title={`Reset to 100% (${kbd("mod", "0")})`} onClick={() => setUI({ zoom: 1 })}>{Math.round(zoom * 100)}%</span>
+      <button className="tb-btn" title={`Zoom in (${kbd("mod", "+")})`} onClick={() => setUI({ zoom: clampZoom(zoom * 1.2) })}><Plus size={14} /></button>
       <button className="tb-btn" title="Zoom to fit" onClick={() => setUI({ zoom: clampZoom(Math.min(1.25, ((scroller.current?.clientWidth ?? 1200) - 140) / artW)) })}><Maximize size={13} /></button>
       <span className="sep" />
       <span className="stats">{count} block{count === 1 ? '' : 's'}</span>

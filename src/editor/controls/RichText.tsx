@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { kbd } from '../../app/platform';
 import clsx from 'clsx';
 import { EditorContent, useEditor, Editor } from '@tiptap/react';
 import { Extension, Mark, mergeAttributes, JSONContent } from '@tiptap/core';
@@ -178,8 +179,8 @@ function Toolbar({ editor, singleLine }: { editor: Editor; singleLine?: boolean 
 
   return (
     <>
-      {btn('Bold (Ctrl+B)', Bold, is('bold'), () => cmd().toggleBold().run())}
-      {btn('Italic (Ctrl+I)', Italic, is('italic'), () => cmd().toggleItalic().run())}
+      {btn(`Bold (${kbd("mod", "B")})`, Bold, is('bold'), () => cmd().toggleBold().run())}
+      {btn(`Italic (${kbd("mod", "I")})`, Italic, is('italic'), () => cmd().toggleItalic().run())}
       {btn('Strikethrough', Strikethrough, is('strike'), () => cmd().toggleStrike().run())}
       {btn('Highlight', Highlighter, is('rentryMark'), () => cmd().toggleMark('rentryMark').run())}
       {btn('Inline code', Code, is('code'), () => cmd().toggleCode().run())}

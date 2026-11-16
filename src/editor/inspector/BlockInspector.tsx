@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { kbd } from '../../app/platform';
 import { ArrowDown, ArrowUp, Copy, Eye, EyeOff, Lock, MousePointerClick, Trash2, Unlock } from 'lucide-react';
 import { getDef } from '../../blocks/registry';
 import { findBlock, locate } from '../../model/tree';
@@ -36,9 +37,9 @@ export function BlockInspector() {
         </div>
       </div>
       <div className="insp-actions">
-        <button className="icon-btn" title="Move up (Alt+↑)" disabled={!loc || loc.index === 0} onClick={() => moveBy(block.id, -1)}><ArrowUp size={14} /></button>
-        <button className="icon-btn" title="Move down (Alt+↓)" disabled={!loc || loc.index >= loc.list.length - 1} onClick={() => moveBy(block.id, 1)}><ArrowDown size={14} /></button>
-        <button className="icon-btn" title="Duplicate (Ctrl+D)" onClick={() => duplicateBlock(block.id)}><Copy size={14} /></button>
+        <button className="icon-btn" title={`Move up (${kbd("alt", "↑")})`} disabled={!loc || loc.index === 0} onClick={() => moveBy(block.id, -1)}><ArrowUp size={14} /></button>
+        <button className="icon-btn" title={`Move down (${kbd("alt", "↓")})`} disabled={!loc || loc.index >= loc.list.length - 1} onClick={() => moveBy(block.id, 1)}><ArrowDown size={14} /></button>
+        <button className="icon-btn" title={`Duplicate (${kbd("mod", "D")})`} onClick={() => duplicateBlock(block.id)}><Copy size={14} /></button>
         <span style={{ flex: 1 }} />
         <button className={`icon-btn ${block.hidden ? 'on' : ''}`} title={block.hidden ? 'Show' : 'Hide'} onClick={() => updateBlock(block.id, (b) => { b.hidden = !b.hidden; })}>{block.hidden ? <EyeOff size={14} /> : <Eye size={14} />}</button>
         <button className={`icon-btn ${block.locked ? 'on' : ''}`} title={block.locked ? 'Unlock' : 'Lock'} onClick={() => updateBlock(block.id, (b) => { b.locked = !b.locked; })}>{block.locked ? <Lock size={14} /> : <Unlock size={14} />}</button>
