@@ -1,0 +1,1019 @@
+Rentry Metadata Docs
+Metadata is Rentry's system that allows for full page customization while keeping its minimalistic style. It works by letting you add commands and values that each will modify the page in some way. See the Example tab for quick reference.
+
+Each Option is part of a group that defines what it modifies. These groups are:
+
+PAGE: Metadata for the web page, such as page title.
+SHARE: Metadata for the web page to be used as snippets by other websites, such as Twitter or Google.
+OPTION: Options that control how the page functions.
+ACCESS: Accesibility options or view preferences.
+SECRET: Options that allow you to store information that will not be readable by others.
+SAFETY: Page blocking and warnings for sensitive content.
+CONTAINER: Controls for the box surrounding the content on the page.
+CONTENT: Controls for the content itself.
+Options always start with their respective group name, for example: SHARE_TITLE
+
+Each Option may have a fixed list or range of Values, explained on this page. If you get it wrong, the error message should provide detailed feedback.
+
+General Use
+To list a metadata option, you must add it to a new line in the metadata box with the format: OPTION = value
+
+A single Option can have multiple values, separated by spaces, that will control it in more detail or for different situations. For example, giving two values to CONTENT_TEXT_COLOR will set the color for light and then dark mode.
+
+Value Mapping: Some Options with multiple values will behave slightly differently depending on how many values you give. For example, CONTAINER_PADDING can be given one, two, three or four values. Using fewer than 4 will re-use the same values again for different sides of the container. To describe this we will provide a value mapping for each Option and count, to show you what the behavior will be.
+If giving CONTAINER_PADDING 4 values, these will be applied in the following way:
+Top Right Bottom Left
+CONTAINER_PADDING = 5px 10px 20px 40px
+This is how it will be applied: top = 5px, right = 10px, bottom = 20px, left = 40px
+
+Value Lists: Other Options with multiple values will affect more things as values are added. For example, FONT_SIZE will change more types of content as more values are added.
+Within this helpsheet, we will list what each value does and in what order. Content font looks like this (commas just for clarity here, don't use them):
+CONTENT_FONT = base, p, h1, h2, h3, h4, h5, h6, li, link, quotes, code
+And as a real world example:
+CONTENT_FONT = 12px 1.5rem 5rem 4rem 3.5rem 3rem 2.8rem 2.5rem 1.5rem 1.5rem 2rem 1.3rem
+
+Units: Each Option has a set list of possible values that are then validated to ensure they are permitted. When these values are numbers they may be qualified by a unit, such as px: 4px. Each Option has a list of available units and a range of available values for each unit. This means that it might be possible to set as high as 1500px but only up to 100%.
+
+Decimals: Some Values can be decimals and each have a limit to the amount of numbers allowed after the decimal place.
+
+Require and Require one tell you when an Option must be paired with another Option. With Require, all listed Options must be present. With Require one, only one of them must be present.
+
+Validations
+Each Value submitted is validated according to an internal checking system that is re-used between different Options. This means that we can explain them here:
+
+max_length: All Options have a max length. This is the total number of characters that can be submitted for this option.
+color_name: A color listed within this page (this is the same as the available colors for inline text color) /rentry-text-colors
+color_hex: A color defined as a hex (base16). These start with a # and have exactly 3, 6 or 8 letters or numbers afterwards, in the range 0-9 and A-F. When there are 3, the characters are repeated to make them 6 internally. When there are 8, the last two control transparency.
+For example: #abc123
+Color picker that supports transparency and outputs as a hex
+color_rgba: A color defined as a RGBA (red green blue alpha). These have the format RGBA(0, 0, 0, 1). Each of the first three numbers can be between 0 and 255. The fourth number can be a decimal between 0 and 1.
+For example: RGBA(255, 0, 120, 0.9)
+Color picker that outputs RGBA
+css_size: A number followed by one of the listed units, within the listed range. If no-unit, then this requires a bare number.
+whitelisted_string: One of the words listed.
+font_name: A name of a Google font, with all spaces replaced with underscores. https://fonts.google.com/
+url: A link, optionally starting with https:// or http://, followed by any number of subdomains, a domain, a page location, a dot and a TLD. At most 1000 characters.
+image_data_uri: The image itself instead of a link to it, as a base64 data URI on one line: data:image/png;base64, followed by the encoded image. The image must be a png, jpeg, gif, webp or ico file. Do not put quotation marks or markdown image syntax, such as ![](...), around it. Every visitor downloads it with the page, so keep it small.
+bool: true or false
+rentry_url: A full rentry URL or a /shorthand-url
+rentry_url_exists: A check to see if the entered URL ever existed
+rentry_url_enabled: A check to ensure the entered URL is currently active and not deleted or disabled.
+Tips
+You may not list the same option more than once.
+
+The metadata validator is ultra-strict, meaning you can only put in information that is permitted.
+
+Most Options do not have default values. To use the default, just delete the Option.
+
+Metadata Options
+GROUP: PAGE
+PAGE_TITLE
+Appears on the tab for this page's window in the browser.
+
+Default Value: Taken from page content.
+
+Max Length: 60
+
+Max Values Accepted: 1
+
+PAGE_DESCRIPTION
+Used by search engines and content snippets.
+
+Default Value: Taken from page content.
+
+Max Length: 160
+
+Max Values Accepted: 1
+
+PAGE_IMAGE
+Used by search engines and content snippets. If we ever have internal page linking with previews, this is what will show.
+
+Default Value: Taken from page content.
+
+Max Length: 1000
+
+Max Values Accepted: 1
+
+Validate One: url
+
+PAGE_ICON
+Changes the icon that appears in the browser tab. Use a link to an image, or the image itself as a base64 data URI (data:image/png;base64,...).
+
+Default Value: The standard Rentry icon shown on all pages
+
+Max Length: 32768
+
+Max Values Accepted: 1
+
+Validate One: urlimage_data_uri
+
+GROUP: SHARE
+SHARE_TITLE
+Used by search engines and content snippets.
+
+Default Value: The value in PAGE_TITLE
+
+Max Length: 60
+
+Max Values Accepted: 1
+
+SHARE_DESCRIPTION
+Used by search engines and content snippets. It's unlikely to be necessary to set this as well as PAGE_DESCRIPTION.
+
+Default Value: The value in PAGE_DESCRIPTION
+
+Max Length: 160
+
+Max Values Accepted: 1
+
+SHARE_IMAGE
+Used by search engines and content snippets.
+
+Default Value: The value in PAGE_IMAGE
+
+Max Length: 1000
+
+Max Values Accepted: 1
+
+Validate One: url
+
+SHARE_TWITTER_TITLE
+Used by Twitter and other Twitter compatible platforms as the title snippet of the link.
+
+Default Value: The value in SHARE_TITLE
+
+Max Length: 60
+
+Max Values Accepted: 1
+
+SHARE_TWITTER_DESCRIPTION
+Used by Twitter and other Twitter compatible platforms as the description snippet of the link.
+
+Default Value: The value in SHARE_DESCRIPTION
+
+Max Length: 160
+
+Max Values Accepted: 1
+
+SHARE_TWITTER_IMAGE
+This image will be used for Twitter and other Twitter compatible platforms when loading a preview of this page.
+
+Default Value: The value in SHARE_IMAGE
+
+Max Length: 1000
+
+Max Values Accepted: 1
+
+Validate One: url
+
+GROUP: OPTION
+OPTION_DISABLE_VIEWS
+Disables the view counter and hides it. Existing view count will return when this is unset.
+
+Max Length: 5
+
+Max Values Accepted: 1
+
+Validate All: bool
+
+OPTION_DISABLE_SEARCH_ENGINE
+Removes the URL from the sitemap and instructs crawling search engines to not index it. Note that it can take up to 2 months for Google to remove listings.
+
+Max Length: 5
+
+Max Values Accepted: 1
+
+Validate All: bool
+
+OPTION_USE_ORIGINAL_PUB_DATE
+If a URL was deleted and re-created this forces it to show the date it was first published, rather than date of re-activation.
+
+Max Length: 5
+
+Max Values Accepted: 1
+
+Validate All: bool
+
+GROUP: ACCESS
+ACCESS_RECOMMENDED_THEME
+When a page does not look good in one of the viewing modes, this will auto switch the viewer to the listed mode.
+
+Max Length: 5
+
+Max Values Accepted: 1
+
+Validate All: whitelisted_string
+
+Permitted whitelisted_string Values:
+
+dark
+light
+ACCESS_EASY_READ
+Adds an e2r button next to the high contrast button that people can click on, which will link to the listed URL. Also, visiting /url/e2r will load the easy read version instead. While this is validated when saved, if the easy read version is removed afterwards, this setting will not update and the link will go to a 404.
+
+Max Length: 300
+
+Max Values Accepted: 1
+
+Validate All: rentry_urlrentry_url_existsrentry_url_enabled
+
+GROUP: SECRET
+Options for storing information that will not show after saving. Modify codes cannot make changes to Values in this group.
+
+SECRET_VERIFY
+Specify one or more external accounts that you can later use to recover your page if you forget the edit code.
+
+Max Length: 3000
+
+Max Values Accepted: 1
+
+SECRET_RAW_ACCESS_CODE
+A passcode that allows access to the raw version of this page, including through an automated script. You can also use this code as custom header rentry-auth, which will give access to the /raw/ version of any page. To get a code, please email support@rentry.co.
+
+Max Length: 100
+
+Max Values Accepted: 1
+
+Validate All: raw_access_code
+
+SECRET_EMAIL_ADDRESS
+Supply an email address to attach to this page, which we can then use to manually reset your edit code on request. In future updates this will be used for automated edit code resets.
+
+Max Length: 300
+
+Max Values Accepted: 1
+
+Validate All: email
+
+GROUP: SAFETY
+SAFETY_PAGE_WARNING
+Adds a warning popup to your page before allowing visitors to view.
+
+Max Length: 100
+
+Max Values Accepted: 4
+
+Validate All: whitelisted_string
+
+Permitted whitelisted_string Values:
+
+adult
+sensitive
+epilepsy
+custom
+SAFETY_PAGE_WARNING_DESCRIPTION
+Provide your own text to the warning popup created by SAFETY_PAGE_WARNING
+
+Max Length: 240
+
+Max Values Accepted: 1
+
+SAFETY_MEDIA_BLUR
+Blurs all images in your page and requires them to be clicked before showing. Allows you to display sensitive images that some viewers may prefer not to see
+
+Max Length: 5
+
+Max Values Accepted: 1
+
+Validate All: bool
+
+SAFETY_LINK_WARNING
+Triggers a popup when clicking on a link within your content. Users will then have the option to cancel and remain on your page.
+
+Max Length: 100
+
+Max Values Accepted: 3
+
+Validate All: whitelisted_string
+
+Permitted whitelisted_string Values:
+
+adult
+epilepsy
+sensitive
+SAFETY_LINK_WARNING_DESCRIPTION
+Provide your own text to the link warning popup.
+
+Max Length: 240
+
+Max Values Accepted: 1
+
+SAFETY_PAGE_FLAG
+Creates a visual icon on your page to inform readers that a page contains certain material. Similar to SAFETY_PAGE_WARNING, except it does not trigger a popup. This metadata is best used to tell Rentry about the content, allowing automatic filtering based on a visitor's country or a user's preference.
+
+Max Length: 100
+
+Max Values Accepted: 3
+
+Validate All: whitelisted_string
+
+Permitted whitelisted_string Values:
+
+adult
+epilepsy
+sensitive
+GROUP: CONTAINER
+CONTAINER_PADDING
+The internal spacing between the main container and the content.
+
+Default Value: 20px
+
+Max Length: 64
+
+Max Values Accepted: 4
+
+Validate All: css_size
+
+Units and Ranges For css_size:
+
+px : 0 - 40 || Decimals: 0
+% : 0 - 25 || Decimals: 3
+vh : 0 - 15 || Decimals: 4
+hw : 0 - 20 || Decimals: 4
+rem : 0 - 7 || Decimals: 4
+Value Mapping:
+
+All Sides
+TOP BOTTOM
+TOP LEFT+RIGHT BOTTOM
+TOP RIGHT BOTTOM LEFT
+CONTAINER_MAX_WIDTH
+Limits and centers the content container's width, which centers all content on larger screens, instead of it aligning left.
+
+Max Length: 16
+
+Max Values Accepted: 1
+
+Validate All: css_size
+
+Units and Ranges For css_size:
+
+px : 100 - 1600 || Decimals: 0
+% : 10 - 100 || Decimals: 3
+vh : 10 - 100 || Decimals: 4
+hw : 10 - 100 || Decimals: 4
+rem : 3 - 25 || Decimals: 4
+CONTAINER_INNER_FOREGROUND_COLOR
+Sets the color of the inner foreground, which is best used as a semi transparent layer on top of the content. Giving a non transparent color here will block out all content. Recommended usage: set a color with around 0.2 transparency, which will give a slight tint to all content.
+
+Default Value: none
+
+Max Length: 32
+
+Max Values Accepted: 2
+
+Validate One: color_namecolor_hexcolor_rgba
+
+Value Mapping:
+
+All Modes
+Light Dark
+CONTAINER_INNER_BACKGROUND_COLOR
+Sets the color of the inner background. Try to ensure that the text color has a high contrast with the background, so that it is still readable. Set to transparent if you are using a border image.
+
+Max Length: 32
+
+Max Values Accepted: 2
+
+Validate One: color_namecolor_hexcolor_rgba
+
+Value Mapping:
+
+All Modes
+Light Dark
+CONTAINER_INNER_BACKGROUND_IMAGE
+Sets the background image used in the inner container, behind the content. Use a link to an image, or the image itself as a base64 data URI.
+
+Max Length: 32768
+
+Max Values Accepted: 1
+
+Validate One: urlimage_data_uri
+
+CONTAINER_INNER_BACKGROUND_IMAGE_REPEAT
+Should the background image show one copy, or many, and how should these behave?
+
+Max Length: 16
+
+Max Values Accepted: 1
+
+Validate All: whitelisted_string
+
+Permitted whitelisted_string Values:
+
+no-repeat
+repeat-x
+repeat-y
+round
+space
+CONTAINER_INNER_BACKGROUND_IMAGE_POSITION
+Controls the position of the inner background image.
+
+Max Length: 6
+
+Max Values Accepted: 1
+
+Validate All: whitelisted_string
+
+Permitted whitelisted_string Values:
+
+bottom
+center
+left
+right
+top
+CONTAINER_INNER_BACKGROUND_IMAGE_SIZE
+Should the image stretch, or sit as large as possible without distorting? Cover = stretch.
+
+Max Length: 16
+
+Max Values Accepted: 1
+
+Validate One: whitelisted_stringcss_size
+
+Units and Ranges For css_size:
+
+px : 1 - 3000 || Decimals: 0
+% : 0.1 - 150 || Decimals: 3
+vh : 0.1 - 200 || Decimals: 4
+hw : 0.1 - 200 || Decimals: 4
+rem : 0.1 - 50 || Decimals: 4
+Permitted whitelisted_string Values:
+
+contain
+cover
+CONTAINER_OUTER_FOREGROUND_COLOR
+Set the colour for the foreground of the outer container, that will sit on top of everything else (inner container not included). If you want anything else to be visible here, you must use transparency.
+
+Max Length: 32
+
+Max Values Accepted: 2
+
+Validate One: color_namecolor_hexcolor_rgba
+
+Value Mapping:
+
+All Modes
+Light Dark
+CONTAINER_OUTER_BACKGROUND_COLOR
+Set the colour for the very back of the outer container, that everything else will appear in front of. No need to use transparency here.
+
+Max Length: 32
+
+Max Values Accepted: 2
+
+Validate One: color_namecolor_hexcolor_rgba
+
+Value Mapping:
+
+All Modes
+Light Dark
+CONTAINER_OUTER_BACKGROUND_IMAGE
+A link to an image, or the image itself as a base64 data URI, to be used for the outer container's background. This will set in front of the outer background color and underneath the inner background color.
+
+Max Length: 32768
+
+Max Values Accepted: 1
+
+Validate One: urlimage_data_uri
+
+CONTAINER_OUTER_BACKGROUND_IMAGE_REPEAT
+Controls whether the outer background image should repeat or not.
+
+Max Length: 16
+
+Max Values Accepted: 1
+
+Validate All: whitelisted_string
+
+Permitted whitelisted_string Values:
+
+no-repeat
+repeat-x
+repeat-y
+round
+space
+CONTAINER_OUTER_BACKGROUND_IMAGE_POSITION
+Controls the position of the outer background image.
+
+Max Length: 16
+
+Max Values Accepted: 1
+
+Validate All: whitelisted_string
+
+Permitted whitelisted_string Values:
+
+bottom
+center
+left
+right
+top
+CONTAINER_OUTER_BACKGROUND_IMAGE_SIZE
+Controls whether the outer background image should stretch and how.
+
+Max Length: 16
+
+Max Values Accepted: 1
+
+Validate One: whitelisted_stringcss_size
+
+Units and Ranges For css_size:
+
+px : 1 - 3000 || Decimals: 0
+% : 0.1 - 150 || Decimals: 3
+vh : 0.1 - 200 || Decimals: 4
+hw : 0.1 - 200 || Decimals: 4
+rem : 0.1 - 50 || Decimals: 4
+Permitted whitelisted_string Values:
+
+contain
+cover
+CONTAINER_BORDER_IMAGE
+The image the border is drawn with: a link to an image, or the image itself as a base64 data URI.
+
+Max Length: 32768
+
+Max Values Accepted: 1
+
+Validate One: urlimage_data_uri
+
+CONTAINER_BORDER_IMAGE_SLICE
+Controls how the border image should be cut up and displayed.
+
+Max Length: 64
+
+Max Values Accepted: 4
+
+Validate One: whitelisted_stringcss_size
+
+Requires: CONTAINER_BORDER_IMAGECONTAINER_BORDER_IMAGE_WIDTH
+
+Units and Ranges For css_size:
+
+no-unit : 0 - 20 || Decimals: 0
+% : 0 - 100 || Decimals: 3
+Permitted whitelisted_string Values:
+
+fill
+Reference: https://developer.mozilla.org/en-US/docs/Web/CSS/border-image-slice
+
+CONTAINER_BORDER_IMAGE_WIDTH
+The width of the image used in the border.
+
+Max Length: 64
+
+Max Values Accepted: 4
+
+Validate One: whitelisted_stringcss_size
+
+Requires: CONTAINER_BORDER_IMAGE
+
+Units and Ranges For css_size:
+
+no-unit : 0 - 20 || Decimals: 0
+px : 0 - 30 || Decimals: 0
+% : 0 - 100 || Decimals: 3
+Value Mapping:
+
+All sides
+TOP BOTTOM
+TOP LEFT+RIGHT BOTTOM
+TOP RIGHT BOTTOM LEFT
+Permitted whitelisted_string Values:
+
+auto
+Reference: https://developer.mozilla.org/en-US/docs/Web/CSS/border-image-width
+
+CONTAINER_BORDER_IMAGE_OUTSET
+Controls where the border image appears in relation to the edges of the container. Higher values = further away.
+
+Max Length: 64
+
+Max Values Accepted: 4
+
+Validate One: whitelisted_stringcss_size
+
+Requires: CONTAINER_BORDER_IMAGECONTAINER_BORDER_IMAGE_WIDTH
+
+Units and Ranges For css_size:
+
+no-unit : 0 - 20 || Decimals: 0
+px : 0 - 30 || Decimals: 0
+Value Mapping:
+
+All sides
+TOP BOTTOM
+TOP LEFT+RIGHT BOTTOM
+TOP RIGHT BOTTOM LEFT
+Permitted whitelisted_string Values:
+
+auto
+Reference: https://developer.mozilla.org/en-US/docs/Web/CSS/border-image-outset
+
+CONTAINER_BORDER_IMAGE_REPEAT
+Whether the image repeats or not throughout the border, and how
+
+Max Length: 32
+
+Max Values Accepted: 2
+
+Validate One: whitelisted_string
+
+Requires: CONTAINER_BORDER_IMAGECONTAINER_BORDER_IMAGE_WIDTH
+
+Value Mapping:
+
+All sides
+TOP+MIDDLE+BOTTOM LEFT+RIGHT
+Permitted whitelisted_string Values:
+
+stretch
+repeat
+round
+space
+Reference: https://developer.mozilla.org/en-US/docs/Web/CSS/border-image-repeat
+
+CONTAINER_BORDER_COLOR
+The color of the border.
+
+Max Length: 120
+
+Max Values Accepted: 4
+
+Validate One: color_namecolor_hexcolor_rgba
+
+Requires: CONTAINER_BORDER_WIDTHCONTAINER_BORDER_STYLE
+
+Value Mapping:
+
+All sides
+TOP BOTTOM
+TOP LEFT+RIGHT BOTTOM
+TOP RIGHT BOTTOM LEFT
+CONTAINER_BORDER_WIDTH
+The thickness of the border.
+
+Max Length: 64
+
+Max Values Accepted: 4
+
+Validate All: css_size
+
+Requires: CONTAINER_BORDER_STYLE
+
+Units and Ranges For css_size:
+
+px : 0 - 40 || Decimals: 0
+% : 0 - 15 || Decimals: 3
+vh : 0 - 5 || Decimals: 4
+hw : 0 - 5 || Decimals: 4
+rem : 0 - 4 || Decimals: 4
+Value Mapping:
+
+All sides
+TOP BOTTOM
+TOP LEFT+RIGHT BOTTOM
+TOP RIGHT BOTTOM LEFT
+CONTAINER_BORDER_STYLE
+The appearance style of the border.
+
+Max Length: 64
+
+Max Values Accepted: 4
+
+Validate All: whitelisted_string
+
+Requires: CONTAINER_BORDER_WIDTH
+
+Permitted whitelisted_string Values:
+
+dotted
+dashed
+solid
+double
+groove
+ridge
+inset
+outset
+CONTAINER_BORDER_RADIUS
+Curves the sides of the container. This can be used without setting any borders at all.
+
+Max Length: 64
+
+Max Values Accepted: 4
+
+Validate All: css_size
+
+Units and Ranges For css_size:
+
+px : 0 - 200 || Decimals: 0
+% : 0 - 50 || Decimals: 3
+vh : 0 - 40 || Decimals: 4
+hw : 0 - 40 || Decimals: 4
+rem : 0 - 30 || Decimals: 4
+Value Mapping:
+
+All sides
+TOP BOTTOM
+TOP LEFT+RIGHT BOTTOM
+TOP RIGHT BOTTOM LEFT
+Reference: https://developer.mozilla.org/en-US/docs/Web/CSS/border-radius
+
+CONTAINER_SHADOW_COLOR
+The color of the shadow.
+
+Max Length: 32
+
+Max Values Accepted: 1
+
+Validate One: color_namecolor_hexcolor_rgba
+
+Requires One: CONTAINER_SHADOW_OFFSETCONTAINER_SHADOW_SPREADCONTAINER_SHADOW_BLUR
+
+CONTAINER_SHADOW_OFFSET
+The amount the shadow offsets from the container, first along, then up/down
+
+Max Length: 32
+
+Max Values Accepted: 2
+
+Validate All: css_size
+
+Requires: CONTAINER_SHADOW_COLOR
+
+Units and Ranges For css_size:
+
+px : -15 - 15 || Decimals: 0
+% : -5 - 5 || Decimals: 3
+vh : -2 - 2 || Decimals: 4
+hw : -2 - 2 || Decimals: 4
+rem : -4 - 2 || Decimals: 4
+Value Mapping:
+
+Offset-X+Offset-Y
+Offset-X Offset-Y
+CONTAINER_SHADOW_SPREAD
+The spread (thickness) of the shadow. Think of this like a border size that becomes a shadow with blur.
+
+Max Length: 12
+
+Max Values Accepted: 1
+
+Validate All: css_size
+
+Requires: CONTAINER_SHADOW_COLOR
+
+Units and Ranges For css_size:
+
+px : 0 - 30 || Decimals: 0
+% : 0 - 10 || Decimals: 3
+vh : 0 - 5 || Decimals: 4
+hw : 0 - 5 || Decimals: 4
+rem : 0 - 3 || Decimals: 4
+CONTAINER_SHADOW_BLUR
+The blurryness of the shadow. Recommended to make this a few px at least, or the shadow will look like a border.
+
+Max Length: 12
+
+Max Values Accepted: 1
+
+Validate All: css_size
+
+Requires: CONTAINER_SHADOW_COLOR
+
+Units and Ranges For css_size:
+
+px : 0 - 30 || Decimals: 0
+% : 0 - 10 || Decimals: 3
+vh : 0 - 5 || Decimals: 4
+hw : 0 - 5 || Decimals: 4
+rem : 0 - 3 || Decimals: 4
+GROUP: CONTENT
+CONTENT_FONT
+Sets the font for the page content. Any font listed on Google fonts is permitted. Copy the font name from the title on the Google fonts page and if there are any spaces, switch them for underscores. For example: Comic Neue becomes Comic_Neue.
+
+Max Length: 1000
+
+Max Values Accepted: 2
+
+Validate All: font_name
+
+Value Mapping:
+
+Font for all content
+Paragraph Headings
+Reference: https://fonts.google.com/
+
+CONTENT_FONT_WEIGHT
+Sets the font weight (boldness) for the page content. If you use multiple fonts, this will apply to them in the same order. If a weight is not available from Google then your browser will try to adjust the weight itself, which may look odd!
+
+Max Length: 24
+
+Max Values Accepted: 2
+
+Validate All: whitelisted_string
+
+Value Mapping:
+
+Font for all content
+Paragraph Headings
+Permitted whitelisted_string Values:
+
+bold
+bolder
+lighter
+normal
+100
+200
+300
+400
+500
+600
+700
+800
+900
+CONTENT_TEXT_DIRECTION
+Setting to rtl switches the text mode to right to left, which is recommended if using a right to left language such as Arabic. If you use this with a left to right language like English it will cause odd behaviour, such as punctuation appearing at the beginning of a line.
+
+Max Length: 7
+
+Max Values Accepted: 1
+
+Validate All: whitelisted_string
+
+Permitted whitelisted_string Values:
+
+ltr
+rtl
+CONTENT_TEXT_SIZE
+Sets the font size, either for the whole page, or for separate types of content depending on how many Values you supply. <br />The first Value, base, sets the root font size of the page, which you can then make use of by setting other Values as relative. <br />It is recommended to set the base as 16px and to use rem for all other values. This will mean that you can then adjust all font sizes by changing only the base value. <br />For example, you set the base as 16px, Heading1 as 2.5rem and Paragraph as 1rem. This then outputs Heading1 as 2.5x16=40px and Paragraph as 16x1 = 16px. <br />Later, you decide you want to font to be larger. So you change the base to 20px. Now, Heading1 will be 2.5x20=50px and Paragraph will be 20x1=20px <br />If you have all Values set, this will make it much easier to control!
+
+Default Value: 16px 1rem 2.5rem 2rem 1.75rem 1.5rem 1.25rem 1rem 1rem 1rem 1rem 14px
+
+Max Length: 128
+
+Max Values Accepted: 12
+
+Validate All: css_size
+
+Units and Ranges For css_size:
+
+no-unit : 0 - 0 || Decimals: 0
+px : 8 - 64 || Decimals: 0
+% : 10 - 500 || Decimals: 3
+vh : 2 - 10 || Decimals: 4
+hw : 2 - 10 || Decimals: 4
+rem : 0.3 - 8 || Decimals: 4
+Value List:
+
+Base
+Paragraphs
+# Header 1
+## Header 2
+### Header 3
+#### Header 4
+##### Header 5
+###### Header 6
+List item
+Link
+Quotes
+Code
+CONTENT_TEXT_ALIGN
+Sets how text sits on the page, especially when there are multiple lines. Justify makes every line in a block of text take up the same width.
+
+Default Value: left
+
+Max Length: 7
+
+Max Values Accepted: 1
+
+Validate All: whitelisted_string
+
+Permitted whitelisted_string Values:
+
+right
+center
+justify
+CONTENT_TEXT_SHADOW_COLOR
+Sets the color of text shadow.
+
+Max Length: 32
+
+Max Values Accepted: 1
+
+Validate One: color_namecolor_hexcolor_rgba
+
+Requires: CONTENT_TEXT_SHADOW_OFFSET
+
+CONTENT_TEXT_SHADOW_OFFSET
+Sets the offset of text shadow.
+
+Max Length: 32
+
+Max Values Accepted: 2
+
+Validate All: css_size
+
+Requires: CONTENT_TEXT_SHADOW_COLOR
+
+Units and Ranges For css_size:
+
+px : -15 - 15 || Decimals: 0
+% : -5 - 5 || Decimals: 3
+vh : -2 - 2 || Decimals: 4
+hw : -2 - 2 || Decimals: 4
+rem : -2 - 2 || Decimals: 4
+Value Mapping:
+
+Offset-X+Offset-Y
+Offset-X Offset-Y
+CONTENT_TEXT_SHADOW_BLUR
+Sets the blur of text shadow.
+
+Max Length: 12
+
+Max Values Accepted: 1
+
+Validate All: css_size
+
+Requires: CONTENT_TEXT_SHADOW_COLORCONTENT_TEXT_SHADOW_OFFSET
+
+Units and Ranges For css_size:
+
+px : 0 - 30 || Decimals: 0
+% : 0 - 10 || Decimals: 3
+vh : 0 - 5 || Decimals: 4
+hw : 0 - 5 || Decimals: 4
+rem : 0 - 3 || Decimals: 4
+CONTENT_TEXT_COLOR
+Sets the base text color. Inline text colors will override this.
+
+Max Length: 128
+
+Max Values Accepted: 2
+
+Validate One: color_namecolor_hexcolor_rgba
+
+Value Mapping:
+
+All Modes
+Light Dark
+CONTENT_LINK_COLOR
+Sets the base link color.
+
+Max Length: 16
+
+Max Values Accepted: 2
+
+Validate One: color_namecolor_hexcolor_rgba
+
+Value Mapping:
+
+All Modes
+Light Dark
+CONTENT_BULLET_COLOR
+Sets the bullet color for lists.
+
+Max Length: 64
+
+Max Values Accepted: 2
+
+Validate One: color_namecolor_hexcolor_rgba
+
+Value Mapping:
+
+All Modes
+Light Dark
+CONTENT_LINK_BEHAVIOR
+Sets whether links load in new pages, or on the same page. Internal links are Rentry URLs, external links are anything else.
+
+Default Value: same new
+
+Max Length: 32
+
+Max Values Accepted: 2
+
+Validate All: whitelisted_string
+
+Value Mapping:
+
+All Links
+Internal External
+Permitted whitelisted_string Values:
+
+same
+new
+Glossary
+Don't know what a term means? We'll list everything you need to know here.
+
+Option: A metadata command, always in full capitals and with underscores for spaces, followed by the = sign. For example: PAGE_TITLE =
+Value: The information you would like to apply to an Option. This is put after the first = sign and must not break to a new line.
+Unit: The descriptor for a number. For example 2px means 2 pixels.
+Unit: Px (Pixels): The little square dots a screen is made of. A phone normally has about 350 across and 700 down. A desktop is normally 1200-1600 by 1000.
+Unit: %: The percent of the container, or of the thing it is subordinate to (such as when used as a font size unit).
+Unit: no-unit: When an option allows for a bare number, it will be listed as this (as when no-unit is not available, a bare number will be read as the default unit for that option). The default unit is always no-unit when this is available.
+Unit: hw (Horizontal Width): The percentage of the full width of the page for the device that is viewing. On desktop, changing the window size will affect this.
+Unit: vh (Vertical Height): The percentage of the full height of the page for the device that is viewing. On desktop, changing the window size will affect this.
+Unit: rem (Root EM): A relative value based on the root font size. Affected by the font itself as the value is taken from width of the font's capital M.
+Standalone: /metadata-how
