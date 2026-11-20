@@ -68,7 +68,7 @@ export function Toolbar() {
       </div>
       <div className="tb-right">
         {aiEnabled && (
-          <button className={`tb-btn ${aiOpen ? 'on' : ''}`} title={`Ask AI (${kbd('mod', 'J')})`} onClick={() => setUI({ aiOpen: !aiOpen })}><Sparkles size={16} /></button>
+          <button className={`tb-btn ai-tint ${aiOpen ? 'on' : ''}`} title={`Ask AI (${kbd('mod', 'J')})`} onClick={() => setUI({ aiOpen: !aiOpen })}><Sparkles size={16} /></button>
         )}
         <button className="tb-btn" title={`Appearance: ${appTheme}`} onClick={() => setUI({ appTheme: nextTheme[appTheme] })}>
           {appTheme === 'system' ? <SunMoon size={16} /> : appTheme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}

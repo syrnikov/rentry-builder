@@ -23,7 +23,7 @@ export interface ChatOptions {
 }
 
 /** Reasoning models (GPT-5, o-series) accept reasoning_effort; low keeps them quick. */
-const isReasoningModel = (m: string) => /^(gpt-5|o\d)/i.test(m.trim());
+const isReasoningModel = (m: string) => /^(gpt-[5-9]|o\d)/i.test(m.trim());
 
 export function mapError(status: number, message: string): AIError {
   const m = message || '';
@@ -56,6 +56,8 @@ export async function chat(o: ChatOptions): Promise<string> {
       model: o.model.trim(),
       messages: o.messages,
       max_completion_tokens: o.maxTokens ?? 12000,
+      // Don't keep this request in OpenAI's stored completions / dashboard logs.
+      store: false,
     };
     if (o.json) body.response_format = { type: 'json_object' };
     if (effort) body.reasoning_effort = 'low';

@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 import type { Editor } from '@tiptap/react';
-import { ArrowUp, Check, ChevronLeft, Copy, Info, Loader2, PenLine, RotateCcw, Sparkles } from 'lucide-react';
+import { ArrowUp, Check, ChevronLeft, Copy, Info, PenLine, RotateCcw, Sparkles } from 'lucide-react';
+import { AIGlow } from './AIGlow';
 import { parseRich, serializeRich } from '../rentry/richText';
 import { renderRentry } from '../preview/rentryMarkdown';
 import { fromPM, toPM } from '../editor/controls/pmConvert';
@@ -82,14 +83,17 @@ export function WritingTools({ editor, singleLine, fieldLabel, onClose }: { edit
 
   if (phase !== 'menu') {
     return (
-      <div className={clsx('wt', phase === 'busy' && 'thinking')}>
+      <div className="wt wt-stage" key="result">
         <div className="wt-head">
           <button type="button" className="icon-btn" title="Back" onClick={() => { abort.current?.abort(); setPhase('menu'); }}><ChevronLeft size={13} /></button>
           <span>{last.length > 48 ? `${last.slice(0, 46)}…` : last}</span>
-          {phase === 'busy' && <Loader2 size={12} className="spin" />}
+          <Sparkles size={12} className={clsx('ai-spark', phase === 'busy' && 'working')} />
         </div>
-        <div className="wt-preview">
-          {out ? <div dangerouslySetInnerHTML={{ __html: renderRentry(out) }} /> : <div className="wt-shimmer"><i /><i /><i /></div>}
+        <div className="wt-preview-wrap">
+          <AIGlow active={phase === 'busy'} surface="var(--surface-2)" />
+          <div className={clsx('wt-preview', phase === 'busy' && out && 'streaming')}>
+            {out ? <div className="wt-text" dangerouslySetInnerHTML={{ __html: renderRentry(out) }} /> : <div className="wt-shimmer"><i /><i /><i /></div>}
+          </div>
         </div>
         <div className="wt-actions">
           <button type="button" className="btn subtle" disabled={phase === 'busy'} onClick={() => run(lastInstruction.current, last)} title="Try again"><RotateCcw size={12} /></button>
@@ -103,7 +107,7 @@ export function WritingTools({ editor, singleLine, fieldLabel, onClose }: { edit
   }
 
   return (
-    <div className="wt">
+    <div className="wt wt-stage" key="menu">
       <div className="wt-scope">
         <Sparkles size={12} />
         {empty ? 'Write this field from your page' : scope.whole ? 'Whole field' : 'Selected text'}
@@ -115,8 +119,8 @@ export function WritingTools({ editor, singleLine, fieldLabel, onClose }: { edit
         </div>
       ) : (
         <div className="wt-grid">
-          {WRITING_ACTIONS.map((a) => (
-            <button key={a.id} type="button" onClick={() => run(a.instruction, a.label)}>{a.label}</button>
+          {WRITING_ACTIONS.map((a, i) => (
+            <button key={a.id} type="button" style={{ '--i': i } as CSSProperties} onClick={() => run(a.instruction, a.label)}>{a.label}</button>
           ))}
         </div>
       )}

@@ -1,47 +1,116 @@
 /* ───────────────────────── AI tools ───────────────────────── */
-/* Neutral like the rest of the UI; the only color is the soft glow while the AI is working. */
-@property --ai-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
-@keyframes ai-spin { to { --ai-angle: 360deg; } }
+/* The UI stays neutral. The only color is the Apple Intelligence palette, and only while the AI works
+   (plus a blue resting tint on ✦ buttons). */
+:root {
+  --ai-blue: #0894FF;   /* leading edge of the sweep; resting tint */
+  --ai-purple: #C959DD; /* blue → pink hand-off, widest band */
+  --ai-pink: #FF2E54;   /* peak saturation, opposite the blue */
+  --ai-orange: #FF9004; /* trailing edge before wrapping to blue */
+  --ai-ease: cubic-bezier(.22, .9, .28, 1);
+  --ai-spring: cubic-bezier(.2, 1.15, .3, 1);
+}
+
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin { animation: spin .9s linear infinite; }
 
-/* Glow sits *behind* the surface: ::before is the blurred ring, ::after repaints the surface on top of it. */
-.ai-bar.thinking::before {
-  content: ''; position: absolute; inset: -2px; border-radius: inherit; z-index: -2; pointer-events: none;
-  background: conic-gradient(from var(--ai-angle), #ff8ad8, #a98bff, #5ec8ff, #74efc5, #ffd36e, #ff9a7a, #ff8ad8);
-  filter: blur(8px); opacity: .8; animation: ai-spin 2.6s linear infinite;
+/* ───────── Living glow (see AIGlow.tsx) ───────── */
+/* GPU-only motion: a pre-rendered conic sweep rotates and soft color blobs slide (transform), the halo
+   breathes (opacity + scale). Blur is a static filter, so nothing is repainted per frame. */
+.ai-glow { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+.ai-glow > span { position: absolute; border-radius: inherit; pointer-events: none; overflow: hidden; }
+/* Hidden (not just transparent) once faded out, so idle glows hold no GPU layers. */
+.ai-glow-bloom, .ai-glow-ring { opacity: 0; visibility: hidden; transition: opacity .8s var(--ai-ease), visibility 0s linear .8s; }
+.ai-glow.on > .ai-glow-bloom, .ai-glow.on > .ai-glow-ring { visibility: visible; transition: opacity .8s var(--ai-ease), visibility 0s; }
+.ai-glow-bloom { inset: -4px; z-index: 0; filter: blur(13px) saturate(1.2); }
+.ai-glow-breath { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; }
+.ai-glow-surface { inset: 0; z-index: 1; }
+.ai-glow-ring {
+  inset: 0; z-index: 2; padding: 1.5px;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
-.ai-bar.thinking::after {
-  content: ''; position: absolute; inset: 0; border-radius: inherit; z-index: -1; pointer-events: none; background: var(--popover);
+.ai-glow.on > .ai-glow-ring { opacity: 1; }
+.ai-glow.on > .ai-glow-bloom { opacity: .78; }
+.ai-glow--soft.on > .ai-glow-bloom { opacity: .9; }
+
+.ai-flow { position: absolute; inset: 0; }
+.ai-flow i { position: absolute; display: block; }
+.ai-sweep {
+  left: 50%; top: 50%; width: 170%; aspect-ratio: 1; min-width: 160px; translate: -50% -50%;
+  background: conic-gradient(var(--ai-blue) 0deg, var(--ai-purple) 70deg, var(--ai-purple) 150deg, var(--ai-pink) 195deg, var(--ai-orange) 290deg, var(--ai-blue) 360deg);
+  animation: ai-rot 11s linear infinite;
 }
-@media (prefers-reduced-motion: reduce) {
-  .ai-bar.thinking::before, .sheet.ai-glow, .ai-bar.thinking .ai-spark { animation: none; }
+.ai-blob { width: 55%; aspect-ratio: 1; min-width: 70px; border-radius: 50%; opacity: .9; }
+.ai-blob-1 { left: -15%; top: -60%; background: radial-gradient(closest-side, var(--ai-pink), transparent); animation: ai-b1 7.3s ease-in-out infinite alternate; }
+.ai-blob-2 { right: -15%; bottom: -60%; background: radial-gradient(closest-side, var(--ai-blue), transparent); animation: ai-b2 8.9s ease-in-out infinite alternate; }
+.ai-blob-3 { left: 30%; top: -40%; width: 40%; background: radial-gradient(closest-side, var(--ai-orange), transparent); animation: ai-b3 5.9s ease-in-out infinite alternate; }
+@keyframes ai-rot { to { rotate: 360deg; } }
+@keyframes ai-b1 { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(90%, 55%) scale(1.25); } 100% { transform: translate(170%, 10%) scale(.9); } }
+@keyframes ai-b2 { 0% { transform: translate(0, 0) scale(1.1); } 50% { transform: translate(-80%, -60%) scale(.85); } 100% { transform: translate(-160%, -15%) scale(1.2); } }
+@keyframes ai-b3 { 0% { transform: translate(0, 0); } 50% { transform: translate(-70%, 80%) scale(1.3); } 100% { transform: translate(60%, 50%) scale(.8); } }
+.ai-glow.on .ai-glow-breath { animation: ai-breathe 3.4s ease-in-out infinite; }
+@keyframes ai-breathe { 0%, 100% { opacity: .62; transform: scale(1); } 50% { opacity: 1; transform: scale(1.03); } }
+/* Idle glows cost nothing. */
+.ai-glow:not(.on) i, .ai-glow:not(.on) .ai-glow-breath { animation-play-state: paused; }
+
+/* ✦ resting tint, and a breathing (not spinning) sparkle while working */
+.ai-tint, .rich-bar .ai-wt-btn { color: var(--ai-blue) !important; }
+.ai-spark { color: var(--ai-blue); flex: none; transition: color .4s var(--ai-ease); }
+.ai-spark.working { animation: ai-spark 2.6s ease-in-out infinite; }
+@keyframes ai-spark {
+  0%, 100% { color: var(--ai-blue); transform: scale(1) rotate(0deg); }
+  25% { color: var(--ai-purple); transform: scale(1.14) rotate(10deg); }
+  50% { color: var(--ai-pink); transform: scale(.92) rotate(0deg); }
+  75% { color: var(--ai-orange); transform: scale(1.08) rotate(-8deg); }
 }
 
-/* Ask AI command bar */
-.ai-bar {
-  position: absolute; left: 50%; bottom: 58px; transform: translateX(-50%); z-index: 6; isolation: isolate;
-  width: min(600px, calc(100% - 32px)); padding: 6px; border-radius: 14px;
-  background: var(--popover); box-shadow: var(--shadow-pop); animation: ai-bar-in .16s ease-out;
-  display: flex; flex-direction: column; gap: 6px;
+/* Shimmering status text ("Studying your style…") */
+.ai-shine {
+  background: linear-gradient(90deg, var(--text-3) 0%, var(--text) 45%, var(--text-3) 90%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: ai-shine 2.2s linear infinite;
 }
-/* Keeps the centering transform during the entrance (pop-in would override it). */
-@keyframes ai-bar-in { from { opacity: 0; transform: translateX(-50%) translateY(6px) scale(.98); } }
-.ai-input { display: flex; align-items: center; gap: 6px; padding: 2px 2px 2px 8px; }
+@keyframes ai-shine { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+
+/* Shared entrance for rows that appear */
+@keyframes ai-rise { from { opacity: 0; transform: translateY(6px); filter: blur(2px); } }
+@keyframes ai-fade { from { opacity: 0; filter: blur(2px); } }
+
+/* ───────── Ask AI command bar ───────── */
+.ai-bar {
+  position: absolute; left: 50%; bottom: 58px; translate: -50% 0; z-index: 6; isolation: isolate;
+  width: min(600px, calc(100% - 32px)); padding: 6px; border-radius: 14px;
+  background: var(--popover); box-shadow: var(--shadow-pop);
+  animation: ai-bar-in .34s var(--ai-spring) both;
+}
+.ai-bar.leaving { animation: ai-bar-out .18s cubic-bezier(.4, 0, 1, 1) both; pointer-events: none; }
+@keyframes ai-bar-in { from { opacity: 0; transform: translateY(12px) scale(.965); filter: blur(4px); } }
+@keyframes ai-bar-out { to { opacity: 0; transform: translateY(8px) scale(.98); filter: blur(3px); } }
+.ai-bar > :not(.ai-glow) { position: relative; z-index: 3; }
+.ai-bar-body > div { display: flex; flex-direction: column; gap: 6px; }
+
+.ai-input { display: flex; align-items: center; gap: 6px; padding: 2px 2px 2px 8px; position: relative; }
 .ai-input input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 13.5px; padding: 7px 2px; color: var(--text); }
-.ai-input input::placeholder { color: var(--text-3); }
-.ai-spark { color: var(--text-2); flex: none; }
-.ai-bar.thinking .ai-spark { animation: spin 2.4s linear infinite; }
+.ai-input input::placeholder { color: var(--text-3); transition: color .3s; }
+.ai-input input:disabled::placeholder { color: transparent; }
+.ai-field { position: relative; flex: 1; min-width: 0; display: flex; }
+.ai-field input { flex: 1; }
+.ai-busy-label { position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: 13.5px; pointer-events: none; white-space: nowrap; }
+.ai-busy-label.ai-shine, .ai-status-row .ai-shine { animation: ai-fade .35s var(--ai-ease) both, ai-shine 2.2s linear infinite; }
 .ai-scope {
   flex: none; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   border: 0; border-radius: 6px; padding: 3px 8px; font-size: 11.5px; font-weight: 500; cursor: default;
-  background: var(--track); color: var(--text-2);
+  background: var(--track); color: var(--text-2); transition: background .25s var(--ai-ease), color .25s var(--ai-ease);
 }
-.ai-scope.on { background: var(--accent-soft); color: var(--accent); }
+.ai-scope.on { background: color-mix(in srgb, var(--ai-blue) 13%, transparent); color: var(--ai-blue); }
 .ai-send {
   flex: none; width: 26px; height: 26px; border-radius: 50%; border: 0; cursor: default;
   display: inline-flex; align-items: center; justify-content: center; background: var(--accent); color: #fff;
+  transition: background .25s var(--ai-ease), color .25s var(--ai-ease), transform .2s var(--ai-spring);
 }
+.ai-send:active:not(:disabled) { transform: scale(.9); }
 .ai-send:disabled { background: var(--track); color: var(--text-3); }
 .ai-send.stop { background: var(--text); color: var(--popover); }
 .ai-suggest { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 4px 4px 32px; }
@@ -49,14 +118,18 @@
 .ai-suggest button {
   border: 0; border-radius: 999px; padding: 4px 10px; font-size: 11.5px; cursor: default;
   background: var(--track); color: var(--text-2);
+  transition: background .2s, color .2s, transform .2s var(--ai-spring);
+  animation: ai-rise .38s var(--ai-ease) both; animation-delay: calc(var(--i, 0) * 45ms + 40ms);
 }
 .ai-suggest button:hover { background: var(--press); color: var(--text); }
-.ai-error { display: flex; gap: 6px; align-items: flex-start; font-size: 12px; color: var(--danger); padding: 4px 8px; line-height: 1.4; }
+.ai-suggest button:active { transform: scale(.96); }
+.ai-error { display: flex; gap: 6px; align-items: flex-start; font-size: 12px; color: var(--danger); padding: 4px 8px; line-height: 1.4; animation: ai-rise .3s var(--ai-ease) both; }
 .ai-error svg { flex: none; margin-top: 2px; }
-.ai-close { position: absolute; top: 8px; right: 8px; z-index: 1; }
+.ai-close { position: absolute !important; top: 8px; right: 8px; z-index: 4 !important; }
 
-.ai-review { display: flex; gap: 10px; align-items: flex-start; padding: 8px 8px 8px 10px; border-radius: 9px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--hairline); }
-.ai-review-icon { flex: none; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--success); color: #fff; margin-top: 1px; }
+.ai-review { display: flex; gap: 10px; align-items: flex-start; padding: 8px 8px 8px 10px; border-radius: 9px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--hairline); animation: ai-rise .4s var(--ai-ease) both; }
+.ai-review-icon { flex: none; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--success); color: #fff; margin-top: 1px; animation: ai-pop .45s var(--ai-spring) both .08s; }
+@keyframes ai-pop { from { transform: scale(.4); opacity: 0; } }
 .ai-review-icon.muted { background: var(--track); color: var(--text-2); }
 .ai-review-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 12px; line-height: 1.4; }
 .ai-review-text strong { font-weight: 600; font-size: 12.5px; }
@@ -66,7 +139,7 @@
 .ai-review-text ul { margin: 4px 0 0; padding-left: 16px; max-height: 120px; overflow: auto; font-size: 11.5px; }
 .ai-review-actions { display: flex; gap: 4px; flex: none; align-self: center; }
 
-/* Key setup + settings */
+/* ───────── Key setup + settings ───────── */
 .ai-setup { display: flex; flex-direction: column; gap: 8px; }
 .ai-setup.compact { padding: 6px 6px 4px; }
 .ai-setup-head { display: flex; gap: 10px; align-items: flex-start; color: var(--text-2); padding-right: 24px; }
@@ -76,57 +149,90 @@
 .ai-setup-head small { font-size: 11.5px; }
 .ai-key-row { display: flex; gap: 6px; align-items: center; }
 .ai-key-row .field { flex: 1; min-width: 0; font-family: var(--mono); font-size: 12px; }
-.ai-status { font-size: 11.5px; display: flex; gap: 5px; align-items: center; }
+.ai-status { font-size: 11.5px; display: flex; gap: 5px; align-items: center; animation: ai-rise .3s var(--ai-ease) both; }
 .ai-status.ok { color: var(--success); }
 .ai-status.err { color: var(--danger); }
 .ai-setup .hint a, .ai-privacy a { color: var(--accent); }
 .ai-privacy { font-size: 11.5px; color: var(--text-2); line-height: 1.45; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--hairline); }
 .ai-privacy strong { color: var(--text); font-weight: 600; }
 .ai-privacy p { margin: 3px 0 0; }
+.ai-privacy code { font-family: var(--mono); font-size: 0.95em; }
 .danger-text { color: var(--danger) !important; }
-.sheet.ai-glow { animation: ai-sheet-glow 1.6s ease-in-out infinite alternate; }
-@keyframes ai-sheet-glow {
-  from { box-shadow: var(--shadow-sheet), 0 0 0 1.5px rgba(169, 139, 255, .55), 0 10px 44px rgba(255, 138, 216, .28); }
-  to { box-shadow: var(--shadow-sheet), 0 0 0 1.5px rgba(94, 200, 255, .55), 0 10px 44px rgba(94, 200, 255, .32); }
-}
 
-/* Writing Tools popover */
+/* New page sheet: the sheet edge breathes in the palette while designing; the button carries the glow. */
+.sheet.ai-glow-sheet { box-shadow: var(--shadow-sheet), 0 0 0 1px color-mix(in srgb, var(--ai-purple) 40%, transparent), -14px 10px 48px color-mix(in srgb, var(--ai-blue) 18%, transparent), 14px 10px 48px color-mix(in srgb, var(--ai-pink) 16%, transparent); transition: box-shadow .8s var(--ai-ease); }
+.ai-btn-wrap { position: relative; isolation: isolate; display: inline-flex; border-radius: 6px; }
+.ai-btn-wrap > .btn { position: relative; z-index: 3; }
+.ai-status-row { display: flex; align-items: center; gap: 6px; font-size: 12px; animation: ai-fade .3s var(--ai-ease) both; }
+
+/* ───────── Writing Tools popover ───────── */
 .wt { position: relative; display: flex; flex-direction: column; gap: 8px; }
+.wt-stage { display: flex; flex-direction: column; gap: 8px; animation: ai-fade .26s var(--ai-ease) both; }
 .wt-scope { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .03em; }
+.wt-scope svg { color: var(--ai-blue); }
 .wt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
 .wt-grid button, .wt-list button {
   border: 0; border-radius: 7px; padding: 7px 9px; font-size: 12.5px; text-align: left; cursor: default;
   background: var(--track); color: var(--text); display: flex; align-items: center; gap: 7px;
+  transition: background .2s, transform .2s var(--ai-spring);
+  animation: ai-rise .34s var(--ai-ease) both; animation-delay: calc(var(--i, 0) * 25ms);
 }
 .wt-grid button:hover, .wt-list button:hover { background: var(--press); }
+.wt-grid button:active, .wt-list button:active { transform: scale(.97); }
 .wt-list { display: flex; flex-direction: column; gap: 4px; }
 .wt-custom { display: flex; gap: 6px; align-items: center; }
 .wt-custom .field { flex: 1; min-width: 0; }
 .wt-head { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-2); margin: -2px 0 0 -4px; }
 .wt-head span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wt-preview-wrap { position: relative; isolation: isolate; border-radius: 9px; }
+.wt-preview-wrap > :not(.ai-glow) { position: relative; z-index: 3; }
 .wt-preview {
-  max-height: 260px; overflow: auto; padding: 10px 12px; border-radius: 8px; font-size: 13px; line-height: 1.55;
-  background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--hairline); color: var(--text); user-select: text;
+  max-height: 260px; overflow: auto; padding: 10px 12px; border-radius: 9px; font-size: 13px; line-height: 1.55;
+  box-shadow: inset 0 0 0 1px var(--hairline); color: var(--text); user-select: text;
 }
+.wt-preview.streaming .wt-text { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 1.5em), rgba(0, 0, 0, .3)); mask-image: linear-gradient(to bottom, #000 calc(100% - 1.5em), rgba(0, 0, 0, .3)); }
+.wt-text { animation: ai-fade .3s var(--ai-ease) both; }
 .wt-preview p { margin: 0 0 6px; }
 .wt-preview p:last-child { margin-bottom: 0; }
 .wt-preview mark { background: #fff1a8; color: #1d1d1f; border-radius: 2px; }
 .wt-preview a { color: var(--accent); }
 .wt-preview img { vertical-align: middle; }
 .wt-shimmer { display: flex; flex-direction: column; gap: 7px; padding: 2px 0; }
-.wt-shimmer i { height: 9px; border-radius: 5px; background: linear-gradient(90deg, var(--track) 0%, var(--press) 50%, var(--track) 100%); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
-.wt-shimmer i:nth-child(2) { width: 88%; }
-.wt-shimmer i:nth-child(3) { width: 62%; }
-@keyframes shimmer { to { background-position: -200% 0; } }
-.wt-actions { display: flex; gap: 4px; align-items: center; }
-.rich-bar .ai-wt-btn { color: var(--text-2); }
-.rich-bar .ai-wt-btn.on { color: var(--accent); }
-
-/* Canvas: blocks the AI just changed glow briefly */
-.cv-block.ai-flash { animation: ai-flash 2.2s ease-out; }
-@keyframes ai-flash {
-  0%, 35% { box-shadow: 0 0 0 2px rgba(169, 139, 255, .75), 0 0 18px 2px rgba(94, 200, 255, .45); }
-  100% { box-shadow: 0 0 0 2px rgba(169, 139, 255, 0), 0 0 18px 2px rgba(94, 200, 255, 0); }
+.wt-shimmer i {
+  height: 9px; border-radius: 5px;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--ai-blue) 10%, var(--track)),
+    color-mix(in srgb, var(--ai-purple) 22%, var(--track)),
+    color-mix(in srgb, var(--ai-pink) 16%, var(--track)),
+    color-mix(in srgb, var(--ai-orange) 12%, var(--track)),
+    color-mix(in srgb, var(--ai-blue) 10%, var(--track)));
+  background-size: 300% 100%; animation: ai-shine 2.4s linear infinite;
 }
+.wt-shimmer i:nth-child(2) { width: 88%; animation-delay: -.3s; }
+.wt-shimmer i:nth-child(3) { width: 62%; animation-delay: -.6s; }
+.wt-actions { display: flex; gap: 4px; align-items: center; }
+.rich-bar .ai-wt-btn.on { background: color-mix(in srgb, var(--ai-blue) 12%, transparent); }
+
+/* ───────── Canvas: blocks the AI just changed ───────── */
+/* A crisp palette ring plus a multicolor halo; only opacity animates. */
+.cv-block.ai-flash::before, .cv-block.ai-flash::after { content: ''; position: absolute; border-radius: 4px; pointer-events: none; z-index: 4; animation: ai-flash-o 2.6s var(--ai-ease) both; }
+.cv-block.ai-flash::before {
+  inset: -3px;
+  box-shadow: -10px -4px 24px color-mix(in srgb, var(--ai-blue) 50%, transparent), 10px 5px 24px color-mix(in srgb, var(--ai-pink) 45%, transparent), 0 0 16px color-mix(in srgb, var(--ai-purple) 50%, transparent);
+}
+.cv-block.ai-flash::after {
+  inset: -3px; padding: 1.5px;
+  background: conic-gradient(from 200deg, var(--ai-blue) 0deg, var(--ai-purple) 70deg, var(--ai-purple) 150deg, var(--ai-pink) 195deg, var(--ai-orange) 290deg, var(--ai-blue) 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+@keyframes ai-flash-o { 0% { opacity: 0; } 12%, 55% { opacity: 1; } 100% { opacity: 0; } }
+
 .tb-btn.on { color: var(--accent); }
-.tpl-thumb.ai-thumb { display: flex; align-items: center; justify-content: center; background: var(--track); color: var(--text-2); }
+.tpl-thumb.ai-thumb { display: flex; align-items: center; justify-content: center; background: var(--track); color: var(--ai-blue); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-flow i, .ai-glow.on .ai-glow-breath, .ai-spark.working, .ai-shine, .wt-shimmer i { animation: none !important; }
+  .ai-bar, .ai-bar.leaving, .ai-review, .ai-suggest button, .wt-stage, .wt-grid button { animation-duration: .01ms !important; }
+}

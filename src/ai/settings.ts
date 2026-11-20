@@ -14,7 +14,7 @@ export interface AISettings {
 }
 
 const STORAGE = 'rentry-builder:ai:v1';
-export const DEFAULT_MODEL = 'gpt-5-mini';
+export const DEFAULT_MODEL = 'gpt-6.2-sol';
 
 function load(): AISettings {
   const base: AISettings = { key: '', model: DEFAULT_MODEL, enabled: true, models: [] };

@@ -5,12 +5,12 @@ import { Row, Toggle } from '../editor/controls';
 import { DEFAULT_MODEL, useAI } from './settings';
 import { AIError, listModels } from './openai';
 
-const SUGGESTED_MODELS = ['gpt-5-mini', 'gpt-5', 'gpt-5-nano', 'gpt-4.1-mini', 'gpt-4.1'];
+const SUGGESTED_MODELS = ['gpt-6.2-sol', 'gpt-6.2-astra', 'gpt-5-mini'];
 
 /** Pick a sensible model the key actually has, keeping the current choice when possible. */
 function pickModel(current: string, models: string[]) {
   if (!models.length || models.includes(current)) return current;
-  return models.find((m) => m === DEFAULT_MODEL) ?? models.find((m) => /^gpt-5.*mini$/.test(m)) ?? models.find((m) => /mini/.test(m)) ?? models[0];
+  return models.find((m) => m === DEFAULT_MODEL) ?? models.find((m) => /-sol$/.test(m)) ?? models.find((m) => /mini$/.test(m)) ?? models[0];
 }
 
 /** API key entry + test. Used inline (first run) and in the settings sheet. */
@@ -95,10 +95,11 @@ export function AISettingsSheet() {
             <input className="field" list="ai-models" value={ai.model} spellCheck={false} onChange={(e) => ai.update({ model: e.target.value })} onBlur={(e) => { if (!e.target.value.trim()) ai.update({ model: DEFAULT_MODEL }); }} />
             <datalist id="ai-models">{models.map((m) => <option key={m} value={m} />)}</datalist>
           </Row>
-          <div className="hint">{DEFAULT_MODEL} is fast and inexpensive and works well here. Larger models are slower but better at big layout changes.</div>
+          <div className="hint">{DEFAULT_MODEL} is the recommended everyday model. Astra models are stronger at big layout changes but slower and pricier.</div>
           <div className="ai-privacy">
             <strong>Privacy</strong>
-            <p>Your key is stored only in this browser and is never included in project files or exports. When you use an AI tool, the page you’re editing (text, settings and image links, not uploaded images or private settings like edit codes) is sent straight to OpenAI. Nothing goes through any other server.</p>
+            <p>Your key is stored only in this browser and is never included in project files or exports. When you use an AI tool, the page you’re editing (text, settings and image links, not uploaded images or private settings like edit codes) goes straight from your browser to OpenAI. Nothing goes through any other server, and the app saves no AI history.</p>
+            <p>Requests are sent with <code>store: false</code>, so they aren’t kept in your OpenAI logs or stored completions, and API data isn’t used for training. OpenAI may still keep requests for up to 30 days for abuse monitoring unless your organization has Zero Data Retention.</p>
           </div>
           {ai.key && (
             <div style={{ display: 'flex' }}>

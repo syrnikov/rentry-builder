@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
-import { Info, Loader2, Save, Sparkles, X } from 'lucide-react';
+import { Info, Save, Sparkles, X } from 'lucide-react';
 import { useEditor } from '../store/editorStore';
 import { saveProjectFile } from '../editor/Toolbar';
 import { kbd } from '../app/platform';
 import { useAI } from './settings';
 import { AIError } from './openai';
-import { runNewPage } from './run';
+import { AIStatus, runNewPage } from './run';
+import { AIGlow } from './AIGlow';
 import { KeySetup } from './AISettings';
 
 const IDEAS = ['My art commissions: prices, process and terms', 'A fandom page for my favorite series', 'A carrd-style links and socials hub', 'My OC / character profile'];
@@ -18,6 +19,7 @@ export function NewPageDialog() {
   const hasKey = useAI((s) => !!s.key.trim());
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<AIStatus>('thinking');
   const [error, setError] = useState<string | null>(null);
   const abort = useRef<AbortController | null>(null);
   useEffect(() => () => abort.current?.abort(), []);
@@ -30,7 +32,8 @@ export function NewPageDialog() {
     setBusy(true);
     setError(null);
     try {
-      const r = await runNewPage(text.trim(), abort.current.signal);
+      setStatus('thinking');
+      const r = await runNewPage(text.trim(), abort.current.signal, setStatus);
       setUI({ aiNewPageOpen: false, leftTab: 'layers' });
       const extra = r.skipped.length ? ` · ${r.skipped.length} invalid part${r.skipped.length === 1 ? '' : 's'} left out` : '';
       useEditor.getState().toast(`Created “${r.name}”${extra} · ${kbd('mod', 'Z')} brings back “${name}”`);
@@ -43,9 +46,9 @@ export function NewPageDialog() {
 
   return (
     <div className="sheet-backdrop" onMouseDown={() => { if (!busy) close(); }}>
-      <div className={clsx('sheet small', busy && 'ai-glow')} onMouseDown={(e) => e.stopPropagation()}>
+      <div className={clsx('sheet small', busy && 'ai-glow-sheet')} onMouseDown={(e) => e.stopPropagation()}>
         <div className="sheet-head">
-          <Sparkles size={14} />
+          <Sparkles size={14} className="ai-spark" />
           <h2>New page in this style</h2>
           <button className="icon-btn" onClick={close}><X size={15} /></button>
         </div>
@@ -73,10 +76,13 @@ export function NewPageDialog() {
               <div className="code-meta">
                 <button className="btn subtle" onClick={saveProjectFile} title="Download the current page as a project file first"><Save size={12} /> Save current page</button>
                 <span className="spacer" />
-                <span className="hint">Replaces the current page ({kbd('mod', 'Z')} undoes)</span>
-                <button className="btn primary" disabled={!text.trim() || busy} onClick={create}>
-                  {busy ? <><Loader2 size={12} className="spin" /> Designing…</> : 'Create page'}
-                </button>
+                {busy
+                  ? <span className="ai-status-row"><Sparkles size={12} className="ai-spark working" /><span key={status} className="ai-shine">{status === 'style' ? 'Studying your style…' : 'Designing your page…'}</span></span>
+                  : <span className="hint">Replaces the current page ({kbd('mod', 'Z')} undoes)</span>}
+                <span className="ai-btn-wrap">
+                  <AIGlow active={busy} variant="soft" />
+                  <button className="btn primary" disabled={!text.trim() || busy} onClick={create}>Create page</button>
+                </span>
               </div>
             </>
           )}

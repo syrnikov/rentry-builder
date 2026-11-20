@@ -230,3 +230,97 @@ describe('OpenAI client', () => {
     expect(cleanWritingReply('a\nb', true)).toBe('a b');
   });
 });
+
+// ───────────────────────── v2: style learning, privacy, model
+import { styleProfile, dominantProps, inheritedProps, styleGuideText } from '../src/ai/style';
+import { briefKey } from '../src/ai/run';
+import { DEFAULT_MODEL } from '../src/ai/settings';
+
+/** Mirrors the author's real page: centered, lowercase, symbols, colored phrases, spacers, text titles. */
+function styledPage(): Project {
+  const t = (id: string, text: string) => { const b = createBlock('paragraph', { text, align: 'center' }); b.id = id; return b; };
+  const sp = (id: string) => { const b = createBlock('spacer'); b.id = id; return b; };
+  return {
+    version: 1, name: 'cozy', meta: {}, palette: [{ value: '#f9d98e', name: '' }, { value: '#f67da4', name: '' }],
+    blocks: [
+      sp('s0'),
+      t('intro', '%#f9d98e% you\'re plastic, %% %#93592a% you\'re tragic %%\n%#f67da4% overly romantic %%'),
+      t('who', '%#93592a% sugi %% ૮・ﻌ・ა %#f67da4% 19 %% he/him'),
+      sp('s1'),
+      t('t1', 'interests & hobbies !'),
+      t('list', '⟡ russian history\n⟡ golden kamuy\n⟡ sanrio %#f67da4% ♡ %%'),
+      sp('s2'),
+      t('t2', 'dni & byi !'),
+      t('dni', '⟡ racists\n⟡ proshippers'),
+    ],
+  };
+}
+
+describe('AI style learning', () => {
+  it('measures alignment, symbols, casing, colors, spacers and text-built titles', () => {
+    const s = styleProfile(styledPage());
+    expect(s.align).toEqual({ value: 'center', count: 6, total: 6 });
+    expect(s.decor.map((d) => d.token)).toEqual(expect.arrayContaining(['⟡', '૮・ﻌ・ა', '♡']));
+    expect(s.linePrefixes).toContain('⟡');
+    expect(s.lowercase).toBe(true);
+    expect(s.color.colors).toEqual(expect.arrayContaining(['#f67da4', '#93592a']));
+    expect(s.spacers.count).toBe(3);
+    expect(s.usesHeadings).toBe(false);
+    expect(s.titleExamples).toContain('interests & hobbies !');
+    expect(s.guide).toMatch(/center/);
+    expect(s.guide).toMatch(/lowercase/);
+    expect(s.guide).toMatch(/not Heading blocks/);
+    expect(styleGuideText(styledPage(), 'brief here')).toContain('brief here');
+  });
+
+  it('new blocks inherit the author’s dominant style', () => {
+    expect(dominantProps(styledPage(), 'paragraph').align).toBe('center');
+    // Page-wide alignment applies to other block types with an align field.
+    expect(dominantProps(styledPage(), 'quote').align ?? dominantProps(styledPage(), 'heading').align).toBe('center');
+  });
+
+  it('"like" copies the look of an existing block but never its content', () => {
+    const p = styledPage();
+    findBlock(p.blocks, 't1')!.props.color = '#f67da4';
+    findBlock(p.blocks, 't1')!.props.style = 'bold';
+    const style = inheritedProps(p, 'paragraph', 't1');
+    expect(style).toMatchObject({ align: 'center', color: '#f67da4', style: 'bold' });
+    expect(style.text).toBeUndefined();
+    // Model props win over the copied look.
+    const { next } = apply(p, [{ op: 'insert', type: 'paragraph', like: 't1', props: { text: 'my oc !', style: 'plain' }, after: 'dni' }]);
+    const added = next.blocks[next.blocks.length - 1];
+    expect(added.props).toMatchObject({ text: 'my oc !', align: 'center', color: '#f67da4', style: 'plain' });
+  });
+
+  it('inserted blocks without "like" still come out centered on a centered page', () => {
+    const { next } = apply(styledPage(), [{ op: 'insert', type: 'paragraph', props: { text: 'new' } }]);
+    expect(next.blocks[next.blocks.length - 1].props.align).toBe('center');
+  });
+
+  it('new pages can reference blocks of the current page with "like"', () => {
+    const src = styledPage();
+    const { blocks } = buildPage([{ type: 'paragraph', like: 'list', props: { text: '⟡ sketches' } }], { allowedUrls: new Set(), source: src });
+    expect(blocks[0].props).toMatchObject({ align: 'center', text: '⟡ sketches' });
+  });
+
+  it('the style brief is cached per page content, not per selection or layer names', () => {
+    const a = styledPage();
+    const b = styledPage();
+    b.blocks[1].name = 'renamed layer';
+    expect(briefKey(a)).toBe(briefKey(b));
+    b.blocks[1].props.text = 'different words';
+    expect(briefKey(a)).not.toBe(briefKey(b));
+  });
+});
+
+describe('AI privacy and model', () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it('every request is sent with store: false', async () => {
+    let body: any = null;
+    vi.stubGlobal('fetch', vi.fn(async (_u: string, init: any) => { body = JSON.parse(init.body); return new Response(JSON.stringify({ choices: [{ message: { content: 'ok' } }] }), { status: 200 }); }));
+    await chat({ key: 'k', model: DEFAULT_MODEL, messages: [] });
+    expect(body.store).toBe(false);
+    expect(body.model).toBe('gpt-6.2-sol');
+    expect(body.reasoning_effort).toBe('low');
+  });
+});

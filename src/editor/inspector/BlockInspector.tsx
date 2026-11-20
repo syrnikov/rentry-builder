@@ -42,7 +42,7 @@ export function BlockInspector() {
         <button className="icon-btn" title={`Move up (${kbd("alt", "↑")})`} disabled={!loc || loc.index === 0} onClick={() => moveBy(block.id, -1)}><ArrowUp size={14} /></button>
         <button className="icon-btn" title={`Move down (${kbd("alt", "↓")})`} disabled={!loc || loc.index >= loc.list.length - 1} onClick={() => moveBy(block.id, 1)}><ArrowDown size={14} /></button>
         <button className="icon-btn" title={`Duplicate (${kbd("mod", "D")})`} onClick={() => duplicateBlock(block.id)}><Copy size={14} /></button>
-        {aiEnabled && <button className="icon-btn" title={`Ask AI about this block (${kbd('mod', 'J')})`} onClick={() => setUI({ aiOpen: true })}><Sparkles size={14} /></button>}
+        {aiEnabled && <button className="icon-btn ai-tint" title={`Ask AI about this block (${kbd('mod', 'J')})`} onClick={() => setUI({ aiOpen: true })}><Sparkles size={14} /></button>}
         <span style={{ flex: 1 }} />
         <button className={`icon-btn ${block.hidden ? 'on' : ''}`} title={block.hidden ? 'Show' : 'Hide'} onClick={() => updateBlock(block.id, (b) => { b.hidden = !b.hidden; })}>{block.hidden ? <EyeOff size={14} /> : <Eye size={14} />}</button>
         <button className={`icon-btn ${block.locked ? 'on' : ''}`} title={block.locked ? 'Unlock' : 'Lock'} onClick={() => updateBlock(block.id, (b) => { b.locked = !b.locked; })}>{block.locked ? <Lock size={14} /> : <Unlock size={14} />}</button>

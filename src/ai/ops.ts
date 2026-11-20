@@ -9,6 +9,7 @@ import { validateMetadata, validateOption } from '../rentry/validateMetadata';
 import { isAnyColor } from '../rentry/colors';
 import { isInlineColor, replaceColor } from '../model/palette';
 import { defFields, isPrivateMetaKey, UPLOADED } from './context';
+import { inheritedProps } from './style';
 
 /**
  * The AI never writes into the page directly. It proposes operations; each one is checked against the
@@ -25,7 +26,7 @@ export type AIOp =
   | { op: 'rename'; name: string };
 
 export interface Position { after?: string; before?: string; parent?: string | null; slot?: number; index?: number }
-export interface BlockSpec { type: string; props?: Props; children?: BlockSpec[][]; name?: string }
+export interface BlockSpec { type: string; props?: Props; children?: BlockSpec[][]; name?: string; /** Existing block whose look to copy. */ like?: string }
 
 export interface OpsReport {
   changedIds: string[];
@@ -39,6 +40,8 @@ export interface OpsReport {
 export interface OpsEnv {
   /** Image URLs the model may use: already on the page, or typed by the user in the request. */
   allowedUrls: Set<string>;
+  /** The author's page: new blocks inherit its style (via `like` or dominant values). */
+  source?: Project;
 }
 
 // ───────────────────────── values
@@ -146,7 +149,8 @@ const syncSlots = (b: Block) => {
 export function buildBlock(spec: BlockSpec, env: OpsEnv, skipped: string[]): Block | null {
   const def = spec && typeof spec.type === 'string' ? getDef(spec.type) : undefined;
   if (!def) { skipped.push(`Unknown block type “${String(spec?.type)}”`); return null; }
-  const props = cleanProps(def.type, spec.props, def.defaults(), env, skipped, def.label);
+  // The author's look first (copied from `like` or their dominant style), then the model's props on top.
+  const props = { ...inheritedProps(env.source, def.type, spec.like), ...cleanProps(def.type, spec.props, def.defaults(), env, skipped, def.label) };
   // AI-made blocks never show the registry's stock sample images: no valid image given = empty.
   const defaults = def.defaults();
   for (const f of defFields(def.type)) {
@@ -202,6 +206,7 @@ function resolveTarget(p: Project, pos: Position, resolve: (id: string) => strin
  */
 export function runOps(p: Project, rawOps: unknown, env: OpsEnv): OpsReport {
   const r: OpsReport = { changedIds: [], blocks: 0, metaKeys: [], other: 0, skipped: [], notes: [] };
+  env = { ...env, source: env.source ?? p };
   const refs = new Map<string, string>();
   const resolve = (id: string) => refs.get(id) ?? id;
   const touched = new Set<string>();
@@ -322,6 +327,7 @@ export function runOps(p: Project, rawOps: unknown, env: OpsEnv): OpsReport {
 
 /** Builds the blocks for a brand-new page (New page in this style). */
 export function buildPage(specs: unknown, env: OpsEnv): { blocks: Block[]; skipped: string[] } {
+  // env.source = the current page, so `like` can point at its blocks.
   const skipped: string[] = [];
   const blocks = (Array.isArray(specs) ? specs.slice(0, 60) : [])
     .map((s) => buildBlock(s as BlockSpec, env, skipped))
