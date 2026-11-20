@@ -9,6 +9,8 @@ import { ExportPanel, ImportMetaDialog } from '../editor/ExportPanel';
 import { Segmented } from '../editor/controls';
 import { useShortcuts } from '../editor/shortcuts';
 import { openProjectFromFile } from '../editor/Toolbar';
+import { AISettingsSheet } from '../ai/AISettings';
+import { NewPageDialog } from '../ai/NewPageDialog';
 
 function useAppTheme() {
   const pref = useEditor((s) => s.ui.appTheme);
@@ -74,6 +76,8 @@ export function App() {
   const exportOpen = useEditor((s) => s.ui.exportOpen);
   const importOpen = useEditor((s) => s.ui.importMetaOpen);
   const toast = useEditor((s) => s.ui.toast);
+  const aiSettingsOpen = useEditor((s) => s.ui.aiSettingsOpen);
+  const aiNewPageOpen = useEditor((s) => s.ui.aiNewPageOpen);
   useEffect(() => {
     const clear = () => { const s = useEditor.getState(); if (s.ui.dragging) s.setUI({ dragging: null, drop: null }); };
     window.addEventListener('dragend', clear);
@@ -88,6 +92,8 @@ export function App() {
       <Inspector />
       {exportOpen && <ExportPanel />}
       {importOpen && <ImportMetaDialog />}
+      {aiSettingsOpen && <AISettingsSheet />}
+      {aiNewPageOpen && <NewPageDialog />}
       {toast && <div className="toast">{toast}</div>}
     </div>
   );

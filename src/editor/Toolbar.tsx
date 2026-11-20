@@ -1,9 +1,10 @@
-import { FilePlus2, FolderOpen, Monitor, Moon, MoreHorizontal, PanelsTopLeft, Redo2, Save, Share, Smartphone, Sun, SunMoon, Undo2 } from 'lucide-react';
+import { FilePlus2, FolderOpen, Sparkles, WandSparkles, Monitor, Moon, MoreHorizontal, PanelsTopLeft, Redo2, Save, Share, Smartphone, Sun, SunMoon, Undo2 } from 'lucide-react';
 import { useEditor } from '../store/editorStore';
 import { Popover, Segmented, usePopover } from './controls';
 import { downloadText, migrateProject, pickFile, PROJECT_EXT, slugName } from '../model/migrate';
 import { blankProject } from '../templates';
 import { kbd } from '../app/platform';
+import { useAI } from '../ai/settings';
 
 export function saveProjectFile() {
   const p = useEditor.getState().project;
@@ -34,6 +35,8 @@ export function Toolbar() {
   const recommended = useEditor((s) => s.project.meta.ACCESS_RECOMMENDED_THEME?.[0]);
   const { undo, redo, setUI, renameProject, loadProject, toast } = useEditor.getState();
   const menu = usePopover();
+  const aiEnabled = useAI((s) => s.enabled);
+  const aiOpen = useEditor((s) => s.ui.aiOpen);
 
   const nextTheme = { system: 'light', light: 'dark', dark: 'system' } as const;
 
@@ -64,6 +67,9 @@ export function Toolbar() {
         {recommended && <span className="recommend-badge" title="ACCESS_RECOMMENDED_THEME is set">Viewers get {recommended}</span>}
       </div>
       <div className="tb-right">
+        {aiEnabled && (
+          <button className={`tb-btn ${aiOpen ? 'on' : ''}`} title={`Ask AI (${kbd('mod', 'J')})`} onClick={() => setUI({ aiOpen: !aiOpen })}><Sparkles size={16} /></button>
+        )}
         <button className="tb-btn" title={`Appearance: ${appTheme}`} onClick={() => setUI({ appTheme: nextTheme[appTheme] })}>
           {appTheme === 'system' ? <SunMoon size={16} /> : appTheme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
         </button>
@@ -76,6 +82,9 @@ export function Toolbar() {
             <button onClick={() => { saveProjectFile(); menu.close(); }}><Save size={14} /> Save project file<span className="kbd">{kbd("mod", "S")}</span></button>
             <hr />
             <button onClick={() => { setUI({ exportOpen: true }); menu.close(); }}><Share size={14} /> Export…<span className="kbd">{kbd("mod", "E")}</span></button>
+            <hr />
+            {aiEnabled && <button onClick={() => { setUI({ aiNewPageOpen: true }); menu.close(); }}><WandSparkles size={14} /> New page in this style…</button>}
+            <button onClick={() => { setUI({ aiSettingsOpen: true }); menu.close(); }}><Sparkles size={14} /> AI settings…</button>
           </div>
         </Popover>
         <div className="divider" />

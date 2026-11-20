@@ -25,6 +25,11 @@ export interface UIState {
   focusMetaKey: string | null;
   /** Editing a palette color also updates every use of it on the page. */
   paletteLink: boolean;
+  /** AI: command bar, settings sheet, new-page dialog, blocks glowing after an AI change. */
+  aiOpen: boolean;
+  aiSettingsOpen: boolean;
+  aiNewPageOpen: boolean;
+  aiFlash: string[];
 }
 
 interface Store {
@@ -136,6 +141,10 @@ const initialUI: UIState = {
   toast: null,
   focusMetaKey: null,
   paletteLink: true,
+  aiOpen: false,
+  aiSettingsOpen: false,
+  aiNewPageOpen: false,
+  aiFlash: [],
   ...loadUI(),
 };
 

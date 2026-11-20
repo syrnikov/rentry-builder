@@ -1,0 +1,132 @@
+/* ───────────────────────── AI tools ───────────────────────── */
+/* Neutral like the rest of the UI; the only color is the soft glow while the AI is working. */
+@property --ai-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+@keyframes ai-spin { to { --ai-angle: 360deg; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin .9s linear infinite; }
+
+/* Glow sits *behind* the surface: ::before is the blurred ring, ::after repaints the surface on top of it. */
+.ai-bar.thinking::before {
+  content: ''; position: absolute; inset: -2px; border-radius: inherit; z-index: -2; pointer-events: none;
+  background: conic-gradient(from var(--ai-angle), #ff8ad8, #a98bff, #5ec8ff, #74efc5, #ffd36e, #ff9a7a, #ff8ad8);
+  filter: blur(8px); opacity: .8; animation: ai-spin 2.6s linear infinite;
+}
+.ai-bar.thinking::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; z-index: -1; pointer-events: none; background: var(--popover);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ai-bar.thinking::before, .sheet.ai-glow, .ai-bar.thinking .ai-spark { animation: none; }
+}
+
+/* Ask AI command bar */
+.ai-bar {
+  position: absolute; left: 50%; bottom: 58px; transform: translateX(-50%); z-index: 6; isolation: isolate;
+  width: min(600px, calc(100% - 32px)); padding: 6px; border-radius: 14px;
+  background: var(--popover); box-shadow: var(--shadow-pop); animation: ai-bar-in .16s ease-out;
+  display: flex; flex-direction: column; gap: 6px;
+}
+/* Keeps the centering transform during the entrance (pop-in would override it). */
+@keyframes ai-bar-in { from { opacity: 0; transform: translateX(-50%) translateY(6px) scale(.98); } }
+.ai-input { display: flex; align-items: center; gap: 6px; padding: 2px 2px 2px 8px; }
+.ai-input input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 13.5px; padding: 7px 2px; color: var(--text); }
+.ai-input input::placeholder { color: var(--text-3); }
+.ai-spark { color: var(--text-2); flex: none; }
+.ai-bar.thinking .ai-spark { animation: spin 2.4s linear infinite; }
+.ai-scope {
+  flex: none; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  border: 0; border-radius: 6px; padding: 3px 8px; font-size: 11.5px; font-weight: 500; cursor: default;
+  background: var(--track); color: var(--text-2);
+}
+.ai-scope.on { background: var(--accent-soft); color: var(--accent); }
+.ai-send {
+  flex: none; width: 26px; height: 26px; border-radius: 50%; border: 0; cursor: default;
+  display: inline-flex; align-items: center; justify-content: center; background: var(--accent); color: #fff;
+}
+.ai-send:disabled { background: var(--track); color: var(--text-3); }
+.ai-send.stop { background: var(--text); color: var(--popover); }
+.ai-suggest { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 4px 4px 32px; }
+.ai-suggest.left { padding: 0; }
+.ai-suggest button {
+  border: 0; border-radius: 999px; padding: 4px 10px; font-size: 11.5px; cursor: default;
+  background: var(--track); color: var(--text-2);
+}
+.ai-suggest button:hover { background: var(--press); color: var(--text); }
+.ai-error { display: flex; gap: 6px; align-items: flex-start; font-size: 12px; color: var(--danger); padding: 4px 8px; line-height: 1.4; }
+.ai-error svg { flex: none; margin-top: 2px; }
+.ai-close { position: absolute; top: 8px; right: 8px; z-index: 1; }
+
+.ai-review { display: flex; gap: 10px; align-items: flex-start; padding: 8px 8px 8px 10px; border-radius: 9px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--hairline); }
+.ai-review-icon { flex: none; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--success); color: #fff; margin-top: 1px; }
+.ai-review-icon.muted { background: var(--track); color: var(--text-2); }
+.ai-review-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 12px; line-height: 1.4; }
+.ai-review-text strong { font-weight: 600; font-size: 12.5px; }
+.ai-review-text > span { color: var(--text-2); }
+.ai-review-text details { color: var(--text-2); margin-top: 2px; }
+.ai-review-text summary { cursor: default; font-size: 11.5px; }
+.ai-review-text ul { margin: 4px 0 0; padding-left: 16px; max-height: 120px; overflow: auto; font-size: 11.5px; }
+.ai-review-actions { display: flex; gap: 4px; flex: none; align-self: center; }
+
+/* Key setup + settings */
+.ai-setup { display: flex; flex-direction: column; gap: 8px; }
+.ai-setup.compact { padding: 6px 6px 4px; }
+.ai-setup-head { display: flex; gap: 10px; align-items: flex-start; color: var(--text-2); padding-right: 24px; }
+.ai-setup-head svg { margin-top: 2px; flex: none; }
+.ai-setup-head span { display: flex; flex-direction: column; gap: 1px; }
+.ai-setup-head strong { color: var(--text); font-size: 12.5px; font-weight: 600; }
+.ai-setup-head small { font-size: 11.5px; }
+.ai-key-row { display: flex; gap: 6px; align-items: center; }
+.ai-key-row .field { flex: 1; min-width: 0; font-family: var(--mono); font-size: 12px; }
+.ai-status { font-size: 11.5px; display: flex; gap: 5px; align-items: center; }
+.ai-status.ok { color: var(--success); }
+.ai-status.err { color: var(--danger); }
+.ai-setup .hint a, .ai-privacy a { color: var(--accent); }
+.ai-privacy { font-size: 11.5px; color: var(--text-2); line-height: 1.45; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--hairline); }
+.ai-privacy strong { color: var(--text); font-weight: 600; }
+.ai-privacy p { margin: 3px 0 0; }
+.danger-text { color: var(--danger) !important; }
+.sheet.ai-glow { animation: ai-sheet-glow 1.6s ease-in-out infinite alternate; }
+@keyframes ai-sheet-glow {
+  from { box-shadow: var(--shadow-sheet), 0 0 0 1.5px rgba(169, 139, 255, .55), 0 10px 44px rgba(255, 138, 216, .28); }
+  to { box-shadow: var(--shadow-sheet), 0 0 0 1.5px rgba(94, 200, 255, .55), 0 10px 44px rgba(94, 200, 255, .32); }
+}
+
+/* Writing Tools popover */
+.wt { position: relative; display: flex; flex-direction: column; gap: 8px; }
+.wt-scope { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .03em; }
+.wt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.wt-grid button, .wt-list button {
+  border: 0; border-radius: 7px; padding: 7px 9px; font-size: 12.5px; text-align: left; cursor: default;
+  background: var(--track); color: var(--text); display: flex; align-items: center; gap: 7px;
+}
+.wt-grid button:hover, .wt-list button:hover { background: var(--press); }
+.wt-list { display: flex; flex-direction: column; gap: 4px; }
+.wt-custom { display: flex; gap: 6px; align-items: center; }
+.wt-custom .field { flex: 1; min-width: 0; }
+.wt-head { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-2); margin: -2px 0 0 -4px; }
+.wt-head span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wt-preview {
+  max-height: 260px; overflow: auto; padding: 10px 12px; border-radius: 8px; font-size: 13px; line-height: 1.55;
+  background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--hairline); color: var(--text); user-select: text;
+}
+.wt-preview p { margin: 0 0 6px; }
+.wt-preview p:last-child { margin-bottom: 0; }
+.wt-preview mark { background: #fff1a8; color: #1d1d1f; border-radius: 2px; }
+.wt-preview a { color: var(--accent); }
+.wt-preview img { vertical-align: middle; }
+.wt-shimmer { display: flex; flex-direction: column; gap: 7px; padding: 2px 0; }
+.wt-shimmer i { height: 9px; border-radius: 5px; background: linear-gradient(90deg, var(--track) 0%, var(--press) 50%, var(--track) 100%); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+.wt-shimmer i:nth-child(2) { width: 88%; }
+.wt-shimmer i:nth-child(3) { width: 62%; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+.wt-actions { display: flex; gap: 4px; align-items: center; }
+.rich-bar .ai-wt-btn { color: var(--text-2); }
+.rich-bar .ai-wt-btn.on { color: var(--accent); }
+
+/* Canvas: blocks the AI just changed glow briefly */
+.cv-block.ai-flash { animation: ai-flash 2.2s ease-out; }
+@keyframes ai-flash {
+  0%, 35% { box-shadow: 0 0 0 2px rgba(169, 139, 255, .75), 0 0 18px 2px rgba(94, 200, 255, .45); }
+  100% { box-shadow: 0 0 0 2px rgba(169, 139, 255, 0), 0 0 18px 2px rgba(94, 200, 255, 0); }
+}
+.tb-btn.on { color: var(--accent); }
+.tpl-thumb.ai-thumb { display: flex; align-items: center; justify-content: center; background: var(--track); color: var(--text-2); }

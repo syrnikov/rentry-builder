@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { kbd } from '../app/platform';
+import { useAI } from '../ai/settings';
 import clsx from 'clsx';
-import { ChevronDown, Eye, EyeOff, FilePlus2, FolderOpen, Lock, Plus, Save, Search, Unlock } from 'lucide-react';
+import { ChevronDown, Eye, EyeOff, FilePlus2, FolderOpen, Lock, Plus, Save, Search, Unlock, WandSparkles } from 'lucide-react';
 import { useEditor } from '../store/editorStore';
 import { getDef, CATEGORIES } from '../blocks/registry';
 import { PRESETS } from '../blocks/presets';
@@ -209,12 +210,19 @@ function Insert() {
 // ───────────────────────── Templates
 function Templates() {
   const { loadProject, toast } = useEditor.getState();
+  const aiEnabled = useAI((st) => st.enabled);
   return (
     <div style={{ padding: 10 }}>
       <div className="side-actions">
         <button className="btn" onClick={openProjectFile}><FolderOpen size={13} /> Open…</button>
         <button className="btn" onClick={saveProjectFile}><Save size={13} /> Save file</button>
       </div>
+      {aiEnabled && (
+        <button className="tpl-card ai-tpl" onClick={() => useEditor.getState().setUI({ aiNewPageOpen: true })}>
+          <span className="tpl-thumb ai-thumb"><WandSparkles size={18} /></span>
+          <span><strong>New page in this style</strong><small>AI lays out a new topic with your current theme</small></span>
+        </button>
+      )}
       <div className="lib-cat" style={{ padding: '10px 6px 6px' }}>Templates</div>
       {TEMPLATES.map((t) => (
         <button key={t.id} className="tpl-card" onClick={() => { loadProject(t.make()); toast(`Loaded “${t.name}” · ${kbd("mod", "Z")} to undo`); }}>

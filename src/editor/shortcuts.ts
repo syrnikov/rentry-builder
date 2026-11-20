@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useEditor } from '../store/editorStore';
 import { locate } from '../model/tree';
 import { openProjectFile, saveProjectFile } from './Toolbar';
+import { useAI } from '../ai/settings';
 
 const isTyping = (t: EventTarget | null) => {
   const el = t as HTMLElement | null;
@@ -19,6 +20,7 @@ export function useShortcuts() {
       if (mod && k === 's') { e.preventDefault(); saveProjectFile(); return; }
       if (mod && k === 'o') { e.preventDefault(); openProjectFile(); return; }
       if (mod && k === 'e') { e.preventDefault(); s.setUI({ exportOpen: !s.ui.exportOpen }); return; }
+      if (mod && k === 'j' && useAI.getState().enabled) { e.preventDefault(); s.setUI({ aiOpen: !s.ui.aiOpen }); return; }
       if (isTyping(e.target)) return;
 
       if (mod && k === 'z') { e.preventDefault(); e.shiftKey ? s.redo() : s.undo(); return; }

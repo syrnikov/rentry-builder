@@ -15,6 +15,7 @@ import { loadGoogleFont } from '../rentry/googleFonts';
 import { Align, resolveAlign } from '../rentry/inline';
 import { heading } from '../blocks/common';
 import { RichTextArea } from './controls/RichText';
+import { AIBar } from '../ai/AIBar';
 
 const EnvCtx = createContext<RenderEnv>({});
 const ART = { desktop: { w: 1100, h: 820, label: 'Desktop' }, mobile: { w: 390, h: 760, label: 'Mobile' } };
@@ -126,6 +127,7 @@ export function Canvas() {
         </div>
       </div>
       <CanvasHud scroller={scroller} artW={art.w} />
+      <AIBar />
     </div>
   );
 }
@@ -224,13 +226,14 @@ const BlockView = memo(function BlockView({ block, index, align, cell }: { block
   const hovered = useEditor((s) => s.hoverId === block.id);
   const editing = useEditor((s) => s.ui.editingId === block.id);
   const isDragging = useEditor((s) => s.ui.dragging?.kind === 'move' && s.ui.dragging.id === block.id);
+  const aiFlash = useEditor((s) => s.ui.aiFlash.includes(block.id));
   const { select, hover, setUI, moveBy, duplicateBlock, removeBlock } = useEditor.getState();
   if (!def) return null;
   const Icon = def.icon;
 
   return (
     <div
-      className={clsx('cv-block', selected && 'selected', hovered && 'hovered', isDragging && 'dragging', block.locked && 'locked')}
+      className={clsx('cv-block', selected && 'selected', hovered && 'hovered', isDragging && 'dragging', block.locked && 'locked', aiFlash && 'ai-flash')}
       data-index={index}
       data-id={block.id}
       draggable={!block.locked && !editing}
@@ -347,7 +350,7 @@ function InlineEditor({ block, field }: { block: Block; field: string }) {
       <div className="popover">
         {plain
           ? <textarea className={clsx('textarea', f?.kind === 'textarea' && f.mono && 'mono')} rows={6} value={value} onChange={(e) => set(e.target.value)} autoFocus spellCheck={false} />
-          : <RichTextArea value={value} onChange={set} rows={4} autoFocus singleLine={f?.kind === 'text'} />}
+          : <RichTextArea value={value} onChange={set} rows={4} autoFocus singleLine={f?.kind === 'text'} label={f?.label} />}
         <div className="ie-foot"><span>Esc to close</span><button className="btn primary" onClick={close}>Done</button></div>
       </div>
     </div>

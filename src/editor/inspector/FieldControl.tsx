@@ -20,7 +20,7 @@ export function FieldControl({ field: f, props, onPatch }: { field: Field; props
     case 'textarea':
       return (
         <Row label={f.label} hint={f.hint} stack>
-          {f.rich ? <RichTextArea value={v ?? ''} onChange={set} rows={f.rows} placeholder={f.placeholder} /> : <TextField multiline mono={f.mono} rows={f.rows} value={v ?? ''} onChange={set} placeholder={f.placeholder} />}
+          {f.rich ? <RichTextArea value={v ?? ''} onChange={set} rows={f.rows} placeholder={f.placeholder} label={f.label} /> : <TextField multiline mono={f.mono} rows={f.rows} value={v ?? ''} onChange={set} placeholder={f.placeholder} />}
         </Row>
       );
     case 'number':

@@ -2,15 +2,18 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { kbd } from '../../app/platform';
 import clsx from 'clsx';
 import { EditorContent, useEditor, Editor } from '@tiptap/react';
-import { Extension, Mark, mergeAttributes, JSONContent } from '@tiptap/core';
+import { Extension, Mark, mergeAttributes } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
-import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, Code, EyeOff, FileCode2, Highlighter, ImagePlus, Italic, Link2, Palette, Strikethrough, Underline, Unlink } from 'lucide-react';
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, Code, EyeOff, FileCode2, Highlighter, ImagePlus, Italic, Link2, Palette, Sparkles, Strikethrough, Underline, Unlink } from 'lucide-react';
+import { WritingTools } from '../../ai/WritingTools';
+import { useAI } from '../../ai/settings';
 import { InlineImageNode, InlineImagePanel } from './InlineImage';
 import type { UnderlineOpts } from '../../rentry/inline';
-import { Line, MarkType, parseRich, RMark, serializeRich } from '../../rentry/richText';
+import { parseRich, serializeRich } from '../../rentry/richText';
+import { fromPM, toPM } from './pmConvert';
 import { ColorPanel, NumberUnit, Popover, Row, Segmented, Select, Toggle, ColorField, usePopover } from './index';
 
 // ───────────────────────── custom marks (rentry-specific inline styles)
@@ -39,61 +42,20 @@ const SingleLine = Extension.create({
   addKeyboardShortcuts: () => ({ Enter: () => true, 'Shift-Enter': () => true }),
 });
 
-// ───────────────────────── model <-> ProseMirror JSON
-const TO_PM: Record<MarkType, string> = { bold: 'bold', italic: 'italic', strike: 'strike', code: 'code', link: 'link', color: 'rentryColor', underline: 'rentryUnderline', mark: 'rentryMark', spoiler: 'rentrySpoiler' };
-const FROM_PM: Record<string, MarkType> = Object.fromEntries(Object.entries(TO_PM).map(([k, v]) => [v, k as MarkType]));
-
-function toPM(lines: Line[]): JSONContent {
-  return {
-    type: 'doc',
-    content: lines.map((l) => ({
-      type: 'paragraph',
-      attrs: { textAlign: l.align === 'left' ? null : l.align },
-      content: l.runs.filter((r) => r.text || r.image).map((r) => {
-        const marks = r.marks.map((m) => {
-          if (m.type === 'link') return { type: 'link', attrs: { href: m.attrs?.href } };
-          return { type: TO_PM[m.type], attrs: m.attrs };
-        });
-        if (r.image) return { type: 'rentryImage', attrs: { ...r.image }, marks };
-        return { type: 'text', text: r.text, marks };
-      }),
-    })),
-  };
-}
-
-function fromPM(doc: JSONContent): Line[] {
-  return (doc.content ?? []).map((p) => ({
-    align: (p.attrs?.textAlign as Line['align']) || 'left',
-    runs: (p.content ?? []).filter((n) => n.type === 'text' || n.type === 'rentryImage').map((n) => ({
-      text: n.text ?? '',
-      image: n.type === 'rentryImage'
-        ? { src: String(n.attrs?.src ?? ''), alt: String(n.attrs?.alt ?? ''), width: String(n.attrs?.width ?? ''), height: String(n.attrs?.height ?? ''), title: String(n.attrs?.title ?? '') }
-        : undefined,
-      marks: (n.marks ?? []).flatMap((m): RMark[] => {
-        const type = FROM_PM[m.type];
-        if (!type) return [];
-        if (type === 'link') return [{ type, attrs: { href: String(m.attrs?.href ?? '') } }];
-        if (type === 'color') return [{ type, attrs: { color: String(m.attrs?.color ?? '') } }];
-        if (type === 'underline') {
-          const a = m.attrs ?? {};
-          return [{ type, attrs: { color: a.color || '', style: a.style || '', type: a.type || '', thickness: a.thickness ? String(a.thickness) : '' } }];
-        }
-        return [{ type }];
-      }),
-    })),
-  }));
-}
-
 // ───────────────────────── component
 
 /**
  * Visual (WYSIWYG) editor for rentry inline text. The value in and out is rentry markdown;
  * the person editing only ever sees formatted text.
  */
-export function RichTextArea({ value, onChange, rows = 4, autoFocus, placeholder, singleLine }: {
+export function RichTextArea({ value, onChange, rows = 4, autoFocus, placeholder, singleLine, label }: {
   value: string; onChange: (v: string) => void; rows?: number; autoFocus?: boolean; placeholder?: string; mono?: boolean; singleLine?: boolean;
+  /** Field name, given to the AI writing tools as context. */
+  label?: string;
 }) {
   const [raw, setRaw] = useState(false);
+  const aiEnabled = useAI((s) => s.enabled);
+  const aiPop = usePopover();
   const last = useRef(value);
   const extensions = useMemo(() => [
     StarterKit.configure({ heading: false, blockquote: false, bulletList: false, orderedList: false, listItem: false, codeBlock: false, horizontalRule: false, hardBreak: false }),
@@ -131,6 +93,11 @@ export function RichTextArea({ value, onChange, rows = 4, autoFocus, placeholder
       <div className="rich-bar">
         {editor && !raw ? <Toolbar editor={editor} singleLine={singleLine} /> : <span className="rich-raw-label">Rentry markdown</span>}
         <span className="rich-spacer" />
+        {aiEnabled && editor && !raw && (
+          <button ref={aiPop.ref} type="button" className={clsx('icon-btn ai-wt-btn', aiPop.open && 'on')} title="Writing Tools (AI)" onMouseDown={(e) => e.preventDefault()} onClick={aiPop.toggle}>
+            <Sparkles size={13} />
+          </button>
+        )}
         <button
           type="button"
           className={clsx('icon-btn', raw && 'on')}
@@ -143,6 +110,11 @@ export function RichTextArea({ value, onChange, rows = 4, autoFocus, placeholder
           <FileCode2 size={13} />
         </button>
       </div>
+      {editor && (
+        <Popover anchor={aiPop.ref} open={aiPop.open} onClose={aiPop.close} width={320} align="end">
+          <WritingTools editor={editor} singleLine={singleLine} fieldLabel={label} onClose={aiPop.close} />
+        </Popover>
+      )}
       {raw ? (
         <textarea className="rich-raw" rows={rows} value={value} spellCheck={false} onChange={(e) => onChange(e.target.value)} autoFocus />
       ) : (
